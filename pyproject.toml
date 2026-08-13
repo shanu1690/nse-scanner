@@ -16,6 +16,8 @@ dependencies = [
     "PyYAML>=6.0",
     "tabulate>=0.9",
     "smartapi-python>=1.5.5",
+    "logzero>=1.7",
+    "websocket-client>=1.7",
     "pyotp>=2.9",
 ]
 
