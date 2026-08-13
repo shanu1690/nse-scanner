@@ -5,6 +5,9 @@ picks** (CE/PE with strike, premium, breakeven), plus a **walk-forward
 backtest** that measures the scanner's real hit-rate — and a **free, hosted web
 dashboard** (GitHub Actions nightly scan → static React app on GitHub Pages).
 
+**Live dashboard:** <https://shanu1690.github.io/nse-scanner/> (refreshed
+weekdays after market close)
+
 > **Honesty first.** Momentum scanners and "max pain" tools sell comfort, not
 > edge. This tool ranks stocks and prints entry/stop/targets, but the included
 > backtest measures what that ranking *actually* predicted. Treat the tables as
