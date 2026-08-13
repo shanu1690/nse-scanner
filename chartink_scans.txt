@@ -1,0 +1,70 @@
+NSE SCANNER -> CHARTINK / SCREENER.IN PORT
+===========================================
+These replicate our FADE/DELIVERY scanner as platform scans so you can
+view results from anywhere (phone/app). Copy-paste into Chartink Scanner
+or Screener.in. They match the SIGNALS, not bit-for-bit picks (platforms
+can't compute the weighted composite score, VOL-z, or relative strength
+vs NIFTY inside a scan).
+
+------------------------------------------------------------
+1) CHARTINK - FADE (beaten-down names expecting a bounce)
+   This is the default style in our config.yaml.
+------------------------------------------------------------
+Go to chartink.com/screener -> New scan -> replace formula with:
+
+close < ema(close, 50)
+and rsi(14) < 45
+and roc(close, 20) < 0
+and close > highest(high, 250) * 0.80
+and volume > avg(volume, 20)
+
+Optional extras (same as our sub-scores):
+  - 23% beaten down:   and close < highest(high, 250) * 0.90
+  - Extra oversold:    and rsi(14) < 40
+  - Rising volume:     and volume > avg(volume, 20) * 1.2
+  - Above 200 dma:     and close > ema(close, 200)
+
+How to read results: sort by "close to 52w low %" - lowest = most
+washed out. These are the FADE-BUY candidates. Stops/targets are NOT
+on Chartink - use ~1.5x ATR for your stop (atr(14) column) - or keep
+using our web UI for exact entry/stop/T1/T2.
+
+------------------------------------------------------------
+2) CHARTINK - MOMENTUM (strong names continuing up)
+   Run if you switch config to style: momentum
+------------------------------------------------------------
+close > ema(close, 50)
+and close > ema(close, 200)
+and rsi(14) > 55
+and roc(close, 20) > 0
+and close > highest(high, 250) * 0.90
+and volume > avg(volume, 20)
+
+------------------------------------------------------------
+3) SCREENER.IN - FADE (EOD data, good for the same idea)
+------------------------------------------------------------
+At screener.in -> Screener -> add filters:
+
+  RSI 14 (Value)      < 45
+  Current Price       below  50 Day MA
+  Return % (3 weeks)  negative            (pick "Low to High")
+  Current Price       > 80% of 52 Week High   (field: "52 Week High")
+  % Deliverable Qty   > 60                  (delivery strength filter)
+
+Sort by "Near 52 Week Low %" ascending. Same idea as our fade list.
+(Note: screener.in updates after market close, not intraday.)
+
+------------------------------------------------------------
+WHAT CANNOT BE REPLICATED
+------------------------------------------------------------
+- Relative strength vs NIFTY (our only factor with a real edge).
+- The 0-100 composite score and exact top-20 ordering.
+- Entry / Stop / T1 / T2 levels (ATR-based) - these platforms don't
+  compute trade levels.
+- The OPTIONS picks (CE strike, premium, breakeven, PCR, max pain) -
+  not available as a screener; Chartink's option tools are OI-based only.
+- Your live SCORECARD / journal (who won, who lost) - unique to us.
+
+=> Best setup: use Chartink/Screener for the daily shortlist from your
+   phone, then confirm entry/stop/targets + the scorecard in our web UI
+   (or the 8:45am email).

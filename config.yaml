@@ -1,0 +1,154 @@
+# nse-scanner configuration
+
+universe:
+  # Nifty 50 + Nifty Next 50 + liquid F&O names (~150 symbols, NSE codes)
+  symbols:
+    - RELIANCE
+    - TCS
+    - HDFCBANK
+    - ICICIBANK
+    - INFY
+    - HINDUNILVR
+    - ITC
+    - SBIN
+    - BHARTIARTL
+    - KOTAKBANK
+    - LT
+    - AXISBANK
+    - BAJFINANCE
+    - MARUTI
+    - SUNPHARMA
+    - TITAN
+    - ULTRACEMCO
+    - WIPRO
+    - HCLTECH
+    - ADANIPORTS
+    - TATASTEEL
+    - NTPC
+    - POWERGRID
+    - ONGC
+    - COALINDIA
+    - NESTLEIND
+    - ASIANPAINT
+    - M&M
+    - TECHM
+    - BAJAJFINSV
+    - HDFCLIFE
+    - SBILIFE
+    - JSWSTEEL
+    - TATACONSUM
+    - CIPLA
+    - DRREDDY
+    - APOLLOHOSP
+    - GRASIM
+    - INDUSINDBK
+    - BRITANNIA
+    - DIVISLAB
+    - HINDALCO
+    - HEROMOTOCO
+    - EICHERMOT
+    - LTM
+    - BAJAJ-AUTO
+    - ADANIENT
+    - ADANIGREEN
+    - ADANIENSOL
+    - ATGL
+    - BANDHANBNK
+    - BANKBARODA
+    - BEL
+    - BHEL
+    - BIOCON
+    - BOSCHLTD
+    - CANBK
+    - CHOLAFIN
+    - CONCOR
+    - DLF
+    - DABUR
+    - EASEMYTRIP
+    - EXIDEIND
+    - GODREJCP
+    - GMRAIRPORT
+    - HAL
+    - HAVELLS
+    - IEX
+    - IDFCFIRSTB
+    - INDIGO
+    - IOC
+    - IRCTC
+    - IRFC
+    - JINDALSTEL
+    - JUBLFOOD
+    - LICI
+    - LUPIN
+    - MUTHOOTFIN
+    - NATIONALUM
+    - NMDC
+    - OBEROIRLTY
+    - PAGEIND
+    - PIRAMALFIN
+    - PFC
+    - PIDILITIND
+    - PIIND
+    - POLYCAB
+    - PNB
+    - RECLTD
+    - SAIL
+    - SIEMENS
+    - SRF
+    - TATAPOWER
+    - TVSMOTOR
+    - UBL
+    - VEDL
+    - ETERNAL
+    - DMART
+    - NYKAA
+    - PAYTM
+    - IRB
+    - ASTRAL
+    - BALKRISIND
+    - ABB
+    - AMBUJACEM
+    - APLAPOLLO
+    - AUROPHARMA
+    - BERGEPAINT
+    - DIXON
+    - FEDERALBNK
+    - GAIL
+    - HDFCAMC
+    - ICICIGI
+    - ICICIPRULI
+    - INDHOTEL
+    - KEI
+    - MARICO
+    - MCX
+    - NHPC
+    - PETRONET
+    - SBICARD
+    - SYNGENE
+    - TATACHEM
+    - TATACOMM
+    - TITAGARH
+    - TRENT
+    - VBL
+    - ZEEL
+
+scanner:
+  momentum:
+    min_score: 55.0
+    top_n: 20
+    # style: "momentum" (buy strength) or "fade" (contrarian long of washed-out
+    # names). The 3-month factor study found fade beats both baseline and
+    # momentum; momentum is kept for comparison. Override per-run with --fade.
+    style: "fade"
+  options:
+    # pre-screen by these single-call NSE endpoints to limit per-symbol chains
+    use_oi_prescreen: true
+    top_n: 12
+
+data:
+  lookback_days: 560
+  index_benchmark: "^NSEI"
+  # Price + options data source: "smartapi" (Angel One free API, requires a
+  # `smartapi:` block in secrets.yaml) or "nse" (yfinance prices + NSE public
+  # API). Falls back to nse automatically when SmartAPI is unavailable.
+  provider: "smartapi"
