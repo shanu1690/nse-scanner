@@ -41,6 +41,18 @@ jobs:
       - name: Install scanner
         run: pip install -e .
 
+      - name: Connectivity check (SmartAPI endpoints)
+        run: |
+          echo "== apiconnect (login) =="
+          curl -s -o /dev/null -w "HTTP %{http_code} in %{time_total}s\n" \
+            --max-time 30 https://apiconnect.angelbroking.com/rest/secure/angelbroking/UserService/GetUserProfile || echo "UNREACHABLE"
+          echo "== scrip master (primary) =="
+          curl -s -o /dev/null -w "HTTP %{http_code} in %{time_total}s\n" \
+            --max-time 60 https://margincalculator.angelone.in/OpenAPI_File/files/OpenAPIScripMaster.json || echo "UNREACHABLE"
+          echo "== scrip master (fallback) =="
+          curl -s -o /dev/null -w "HTTP %{http_code} in %{time_total}s\n" \
+            --max-time 60 https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json || echo "UNREACHABLE"
+
       - name: Build scanner data (live SmartAPI)
         env:
           SMARTAPI_API_KEY: ${{ secrets.SMARTAPI_API_KEY }}

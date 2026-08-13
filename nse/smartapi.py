@@ -63,6 +63,9 @@ NIFTY_INDEX_TOKEN = "99926000"  # NIFTY 50 spot index
 BATCH_SIZE = 50                 # getMarketData max tokens per request
 REQUEST_GAP = 1.1               # seconds between authenticated calls (rate limit ~1/s)
 
+_SESSION = None
+_SESSION_LOCK = threading.Lock()
+
 
 class SmartAPIUnavailable(RuntimeError):
     pass
@@ -135,6 +138,7 @@ class SmartAPISession:
         self._scrip_ts = None
         self._lock = threading.Lock()
         self._last_call = 0.0
+        self._shared = False
 
     # ---- auth ---------------------------------------------------------------
 
@@ -191,9 +195,12 @@ class SmartAPISession:
             f"smartapi rate-limited after {attempts} tries: {last}")
 
     def close(self):
+        if self._shared:
+            return  # ownership is process-wide; see close_shared_session()
+        if self._obj is None:
+            return
         try:
-            if self._obj is not None:
-                self._obj.terminateSession(self._client_id)
+            self._obj.terminateSession(self._client_id)
         except Exception:
             pass
         self._obj = None
@@ -517,3 +524,29 @@ class SmartAPISession:
             df[col] = pd.to_numeric(df[col], errors="coerce")
         df = df.dropna(subset=["Date"]).set_index("Date").sort_index()
         return df[~df.index.duplicated(keep="last")]
+
+
+def get_shared_session():
+    """Process-wide singleton session: one login + one scrip-master download
+    shared by the price cache and the option-chain scan."""
+    global _SESSION
+    with _SESSION_LOCK:
+        if _SESSION is None:
+            s = SmartAPISession()
+            s._shared = True
+            _SESSION = s
+        return _SESSION
+
+
+def close_shared_session():
+    """Release the shared session (only when no further calls are needed)."""
+    global _SESSION
+    with _SESSION_LOCK:
+        s = _SESSION
+        _SESSION = None
+    if s is not None:
+        try:
+            s._shared = False
+            s.close()
+        except Exception:
+            pass

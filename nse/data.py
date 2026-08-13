@@ -40,19 +40,10 @@ def _yahoo_ticker(symbol):
 
 def _fetch_smartapi(symbol, start):
     """Download history via Angel One SmartAPI; None (fallback) if unavailable."""
-    try:
-        from nse import smartapi
-        session = smartapi.SmartAPISession()
-        try:
-            df = session.candles(symbol, pd.Timestamp(start).date(),
-                                 pd.Timestamp.today())
-        except smartapi.SmartAPIUnavailable:
-            return None
-        finally:
-            session.close()
-        return df
-    except (smartapi.SmartAPIUnavailable, ImportError, OSError):
-        return None
+    from nse import smartapi
+    session = smartapi.get_shared_session()
+    return session.candles(symbol, pd.Timestamp(start).date(),
+                           pd.Timestamp.today())
 
 
 def update_price_history(symbol, lookback_days=LOOKBACK_DAYS, force=False):
@@ -81,7 +72,12 @@ def update_price_history(symbol, lookback_days=LOOKBACK_DAYS, force=False):
         return df
 
     if _provider() == "smartapi":
-        smart = _fetch_smartapi(symbol, start)
+        try:
+            smart = _fetch_smartapi(symbol, start)
+        except (ImportError, OSError, RuntimeError) as exc:
+            print(f"  ! smartapi {symbol}: {exc} -> yfinance fallback",
+                  file=sys.stderr)
+            smart = None
         if smart is not None and len(smart):
             combined = smart
             if df is not None and len(df):

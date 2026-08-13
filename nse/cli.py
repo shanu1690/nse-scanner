@@ -131,7 +131,7 @@ def _new_options_session():
     """Return (session, exception_type) for the configured data provider."""
     if DATA_CFG.get("provider", "nse") == "smartapi":
         from nse import smartapi
-        return smartapi.SmartAPISession(), smartapi.SmartAPIUnavailable
+        return smartapi.get_shared_session(), smartapi.SmartAPIUnavailable
     return nse_api.NSESession(cache_ttl_minutes=15), nse_api.NSEUnavailable
 
 
