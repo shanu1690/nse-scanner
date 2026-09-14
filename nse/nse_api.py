@@ -53,10 +53,21 @@ class NSESession:
         'browser' -> always use headful Chrome via Playwright.
     """
 
-    def __init__(self, backend="auto", cache_ttl_minutes=15, min_gap=MIN_REQUEST_GAP):
+    def __init__(self, backend="auto", cache_ttl_minutes=15, min_gap=MIN_REQUEST_GAP,
+                 landing_path="/option-chain"):
+        """landing_path: the page whose session/cookies this instance primes
+        against. Akamai's bot check appears to tie session validity to the
+        actual page context that requested it -- a session primed on
+        /option-chain doesn't reliably unlock /companies-listing/* endpoints
+        (corporate-announcements, corporate-actions, board-meetings) even
+        though the same cookies are sent. Callers fetching those should pass
+        the matching landing page rather than relying on the option-chain
+        default.
+        """
         self.backend = backend
         self.cache_ttl = timedelta(minutes=cache_ttl_minutes)
         self.min_gap = min_gap
+        self.landing_path = landing_path
         self._session = None
         self._cookies_ready = False
         self._last_request = 0.0
@@ -103,8 +114,9 @@ class NSESession:
         except ImportError:
             self._session = requests.Session()
             self._session.headers.update(DEFAULT_HEADERS)
+        self._session.headers["Referer"] = BASE + self.landing_path
         self._session.get(BASE + "/", timeout=20)
-        self._session.get(BASE + "/option-chain", timeout=20)
+        self._session.get(BASE + self.landing_path, timeout=20)
         self._cookies_ready = True
 
     def _requests_json(self, url):
@@ -137,22 +149,22 @@ class NSESession:
             self._pw = None
             raise NSEUnavailable(f"Cannot launch Chrome via Playwright: {exc}")
         self._page = self._browser.new_page(locale="en-US")
-        self._page.goto(BASE + "/option-chain", timeout=90000, wait_until="commit")
+        self._page.goto(BASE + self.landing_path, timeout=90000, wait_until="commit")
         self._page.wait_for_timeout(9000)  # let the Akamai JS challenge settle
 
     def _browser_json(self, url):
         self._ensure_browser()
         out = self._page.evaluate(
-            """(u) => fetch(u, {
+            """({u, referer}) => fetch(u, {
                 headers: {
-                    'Referer': 'https://www.nseindia.com/option-chain',
+                    'Referer': referer,
                     'Accept': 'application/json'
                 }
             }).then(r => r.text()).then(t => {
                 try { return JSON.parse(t); }
                 catch (e) { return {__html__: t.slice(0, 120)}; }
             })""",
-            url,
+            {"u": url, "referer": BASE + self.landing_path},
         )
         if isinstance(out, dict) and "__html__" in out:
             raise NSEUnavailable(f"NSE blocked browser fetch: {out['__html__']}")
@@ -204,7 +216,7 @@ class NSESession:
                 # NSE rate-limits transiently: reload the challenge page and pause.
                 time.sleep(6 * (attempt + 1))
                 try:
-                    self._page.goto(BASE + "/option-chain", timeout=60000, wait_until="commit")
+                    self._page.goto(BASE + self.landing_path, timeout=60000, wait_until="commit")
                     self._page.wait_for_timeout(5000)
                 except Exception:
                     pass
