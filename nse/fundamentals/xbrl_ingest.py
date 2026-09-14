@@ -231,6 +231,40 @@ def _parse_ddmmyyyy(s: str) -> Optional[date]:
         return None
 
 
+# Indian fiscal quarters are fixed calendar ranges (FY runs Apr-Mar):
+# First=Apr-Jun, Second=Jul-Sep, Third=Oct-Dec, Fourth=Jan-Mar. Keyed by the
+# ReportingQuarter tag's leading ordinal word, lowercased.
+_FISCAL_QUARTER_END = {
+    "first": (6, 30), "second": (9, 30), "third": (12, 31), "fourth": (3, 31),
+}
+
+
+def _derive_period_end_from_quarter(facts: dict) -> Optional[date]:
+    """Fallback period_end for filings that omit DateOfEndOfReportingPeriod
+    entirely -- seen live in a handful of real BSE filings from a SEBI
+    taxonomy-version transition around April-July 2025 (e.g. RELIANCE's Q4
+    FY25 and Q1 FY26 results) that tag only DateOfStartOfFinancialYear plus
+    a ReportingQuarter ordinal instead. Since Indian fiscal quarters are
+    fixed calendar ranges, which ordinal quarter of which fiscal year fully
+    determines the period end -- reconstructing it here means these
+    filings' data doesn't just vanish from the point-in-time store (Phase 6
+    caught this: with these two quarters silently dropped, no symbol had a
+    valid year-ago comparison and every growth-YoY factor came back empty
+    across the entire universe, not because growth was noise but because
+    the data pipeline missed a duplicate/backfilled record).
+    """
+    fy_start = _parse_ddmmyyyy(facts.get("DateOfStartOfFinancialYear", ""))
+    if fy_start is None:
+        return None
+    ordinal = (facts.get("ReportingQuarter") or "").strip().lower().split(" ")[0]
+    month_day = _FISCAL_QUARTER_END.get(ordinal)
+    if month_day is None:
+        return None
+    month, day = month_day
+    year = fy_start.year + 1 if ordinal == "fourth" else fy_start.year
+    return date(year, month, day)
+
+
 def _parse_bse_created(s: str) -> Optional[datetime]:
     """Fld_CreateDate looks like '2026-07-17T19:48:51.41', naive, in IST
     (BSE's own timezone) -- localize then convert to UTC.
@@ -279,6 +313,8 @@ def _first_tagged_value(facts: dict, candidate_tags: tuple) -> Optional[float]:
 def extract_filing(html: str, symbol: str) -> Optional[ParsedFiling]:
     facts = parse_ixbrl(html)
     period_end = _parse_ddmmyyyy(facts.get("DateOfEndOfReportingPeriod", ""))
+    if period_end is None:
+        period_end = _derive_period_end_from_quarter(facts)
     if period_end is None:
         return None
     values = {name: _first_tagged_value(facts, tags) for name, tags in FACTOR_TAGS.items()}

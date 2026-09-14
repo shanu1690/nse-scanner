@@ -36,8 +36,15 @@ def _symbol_ns(symbol):
 
 
 def _yahoo_ticker(symbol):
-    if symbol == "^NSEI":
-        return "^NSEI"
+    """Yahoo Finance index tickers (^NSEI, ^INDIAVIX, ...) are used as-is --
+    appending .NS to an index symbol produces a ticker that doesn't exist
+    (^INDIAVIX.NS 404s; only equity/derivative underlyings need the .NS
+    suffix). Previously this only special-cased ^NSEI, which meant any
+    other index ticker (e.g. nse/regime's ^INDIAVIX fetch) silently
+    corrupted into a nonexistent one -- caught live via Phase 6's fusion
+    audit trying to fetch India VIX for the first time."""
+    if symbol.startswith("^"):
+        return symbol
     return _symbol_ns(symbol)
 
 

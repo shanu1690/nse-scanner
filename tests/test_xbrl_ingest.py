@@ -91,6 +91,57 @@ def test_extract_filing_none_when_no_period_end():
     assert xi.extract_filing("<html>no facts here</html>", "X") is None
 
 
+# ------------------------------------------ period-end-from-quarter fallback
+# Real, live-verified shape: some BSE filings (a SEBI taxonomy-version
+# transition seen in RELIANCE's Apr/Jul-2025 filings) omit
+# DateOfEndOfReportingPeriod entirely and tag only DateOfStartOfFinancialYear
+# + a ReportingQuarter ordinal.
+_SAMPLE_IXBRL_NO_PERIOD_END = """
+<html><body>
+<span><ix:nonNumeric name='in-capmkt:Symbol' contextRef='OneD'>RELIANCE</ix:nonNumeric></span>
+<span><ix:nonNumeric name='in-capmkt:ReportingQuarter' contextRef='OneD'>First quarter</ix:nonNumeric></span>
+<span><ix:nonNumeric name='in-capmkt:DateOfStartOfFinancialYear' contextRef='OneD'>01-04-2025</ix:nonNumeric></span>
+<span><ix:nonNumeric name='in-capmkt:DateOfEndOfFinancialYear' contextRef='OneD'>31-03-2026</ix:nonNumeric></span>
+<td><ix:nonFraction name='in-capmkt:ProfitLossForPeriod' contextRef='OneD' unitRef='INR'>5000.00</ix:nonFraction></td>
+</body></html>
+"""
+
+
+def test_derive_period_end_from_quarter_first():
+    facts = {"ReportingQuarter": "First quarter", "DateOfStartOfFinancialYear": "01-04-2025"}
+    assert xi._derive_period_end_from_quarter(facts) == date(2025, 6, 30)
+
+
+def test_derive_period_end_from_quarter_fourth_rolls_into_next_year():
+    facts = {"ReportingQuarter": "Fourth quarter", "DateOfStartOfFinancialYear": "01-04-2024"}
+    assert xi._derive_period_end_from_quarter(facts) == date(2025, 3, 31)
+
+
+def test_derive_period_end_from_quarter_all_four_ordinals():
+    fy_start = "01-04-2023"
+    expected = {"First quarter": date(2023, 6, 30), "Second quarter": date(2023, 9, 30),
+                "Third quarter": date(2023, 12, 31), "Fourth quarter": date(2024, 3, 31)}
+    for quarter, exp in expected.items():
+        facts = {"ReportingQuarter": quarter, "DateOfStartOfFinancialYear": fy_start}
+        assert xi._derive_period_end_from_quarter(facts) == exp
+
+
+def test_derive_period_end_from_quarter_none_without_fy_start():
+    assert xi._derive_period_end_from_quarter({"ReportingQuarter": "First quarter"}) is None
+
+
+def test_derive_period_end_from_quarter_none_with_unrecognized_ordinal():
+    facts = {"ReportingQuarter": "Special quarter", "DateOfStartOfFinancialYear": "01-04-2025"}
+    assert xi._derive_period_end_from_quarter(facts) is None
+
+
+def test_extract_filing_falls_back_to_derived_period_end():
+    filing = xi.extract_filing(_SAMPLE_IXBRL_NO_PERIOD_END, "RELIANCE")
+    assert filing is not None
+    assert filing.period_end == date(2025, 6, 30)
+    assert filing.values["net_profit"] == 5000.0
+
+
 # ------------------------------------------------------ bank/NBFC taxonomy fallback
 def test_extract_filing_resolves_bank_format_tags():
     """A bank filing has none of the industrial-format tags at all -- each
