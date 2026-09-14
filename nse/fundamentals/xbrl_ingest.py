@@ -80,19 +80,53 @@ REQUEST_GAP = 0.5  # seconds between calls -- polite, not load-tested further
 # growth/valuation/balance-sheet factor names Phase 5 asks for. Every filing
 # tags ~50-80 facts; this is deliberately not all of them -- add more here
 # once run_factor_analysis-style auditing says a specific one is worth it.
+#
+# Banks/NBFCs file under a DIFFERENT SEBI taxonomy layout (Regulation 33
+# "Format B" -- verified live against HDFCBANK/ICICIBANK/SBIN/KOTAKBANK/
+# AXISBANK filings) that uses different tag names for the same concept:
+# e.g. "ProfitLossForThePeriod" instead of "ProfitLossForPeriod",
+# "ProfitLossFromOrdinaryActivitiesBeforeTax" instead of "ProfitBeforeTax",
+# "BasicEarningsPerShareBeforeExtraordinaryItems" instead of the
+# "...FromContinuingAndDiscontinuedOperations" variant, and no top-level
+# "RevenueFromOperations" tag at all -- a bank's core-business revenue is
+# tagged "InterestEarned" instead. Each entry below is a tuple of candidate
+# tags tried in order (industrial-format first, bank/NBFC fallback second);
+# the first one actually present in a given filing wins. "TaxExpense",
+# "Income" and "PaidUpValueOfEquityShareCapital" use the same tag name in
+# both formats, so those stay single-candidate.
+#
+# Two factors are intentionally left industrial-only, not "missing"
+# fallbacks: "debt_equity_ratio" and "finance_costs" don't have an honest
+# bank equivalent. A bank's "InterestExpended" is its core operating cost
+# (funding deposits/borrowings to re-lend), not debt-servicing cost on top
+# of operations the way "finance costs" means for a non-financial company --
+# mapping it in would make debt_equity_ratio/interest_coverage silently
+# compare an apples factor to an oranges one. Better to genuinely have no
+# data for banks here than to fabricate a number that looks comparable but
+# isn't.
+#
+# NBFC filings (e.g. BAJFINANCE) are a separate, harder gap: BSE's filing
+# index for them returns ONLY .xml-suffixed document names (no ".html"
+# duplicate the way industrial/bank filings get) and the raw .xml URL
+# genuinely 404s on BSE's own server (verified live) -- there is currently
+# no known way to fetch NBFC filing content at all, so ingest_symbol()
+# correctly returns 0 records for them. That's a document-access problem,
+# not a taxonomy-mapping one, and isn't fixed by this tag table.
 FACTOR_TAGS = {
-    "revenue_from_operations": "RevenueFromOperations",
-    "total_income": "Income",
-    "total_expenses": "Expenses",
-    "profit_before_tax": "ProfitBeforeTax",
-    "tax_expense": "TaxExpense",
-    "net_profit": "ProfitLossForPeriod",
-    "comprehensive_income": "ComprehensiveIncomeForThePeriod",
-    "eps_basic": "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
-    "eps_diluted": "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
-    "debt_equity_ratio": "DebtEquityRatio",
-    "paid_up_equity_capital": "PaidUpValueOfEquityShareCapital",
-    "finance_costs": "FinanceCosts",
+    "revenue_from_operations": ("RevenueFromOperations", "InterestEarned"),
+    "total_income": ("Income",),
+    "total_expenses": ("Expenses",),
+    "profit_before_tax": ("ProfitBeforeTax", "ProfitLossFromOrdinaryActivitiesBeforeTax"),
+    "tax_expense": ("TaxExpense",),
+    "net_profit": ("ProfitLossForPeriod", "ProfitLossForThePeriod"),
+    "comprehensive_income": ("ComprehensiveIncomeForThePeriod",),
+    "eps_basic": ("BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                  "BasicEarningsPerShareBeforeExtraordinaryItems"),
+    "eps_diluted": ("DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                    "DilutedEarningsPerShareBeforeExtraordinaryItems"),
+    "debt_equity_ratio": ("DebtEquityRatio",),
+    "paid_up_equity_capital": ("PaidUpValueOfEquityShareCapital",),
+    "finance_costs": ("FinanceCosts",),
 }
 
 _NUM_FACT_RE = re.compile(
@@ -230,12 +264,24 @@ class ParsedFiling:
     raw_facts: dict                # every tagged fact, for anything not in FACTOR_TAGS
 
 
+def _first_tagged_value(facts: dict, candidate_tags: tuple) -> Optional[float]:
+    """First candidate tag actually present (with a non-None value) in this
+    filing's facts, in priority order -- lets one factor name resolve to
+    either the industrial or the bank/NBFC taxonomy tag without needing to
+    know upfront which format a given filer uses."""
+    for tag in candidate_tags:
+        val = facts.get(tag)
+        if val is not None:
+            return val
+    return None
+
+
 def extract_filing(html: str, symbol: str) -> Optional[ParsedFiling]:
     facts = parse_ixbrl(html)
     period_end = _parse_ddmmyyyy(facts.get("DateOfEndOfReportingPeriod", ""))
     if period_end is None:
         return None
-    values = {name: facts.get(tag) for name, tag in FACTOR_TAGS.items()}
+    values = {name: _first_tagged_value(facts, tags) for name, tags in FACTOR_TAGS.items()}
     return ParsedFiling(
         symbol=symbol, period_end=period_end,
         nature=facts.get("NatureOfReportStandaloneConsolidated"),

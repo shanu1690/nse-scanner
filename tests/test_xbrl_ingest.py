@@ -33,6 +33,22 @@ _SAMPLE_IXBRL = """
 </body></html>
 """
 
+# A bank-format snippet (SEBI Regulation 33 "Format B" -- verified live
+# against HDFCBANK) using different tag names for the same concepts: no
+# top-level RevenueFromOperations/ProfitBeforeTax/ProfitLossForPeriod at
+# all, only their bank-taxonomy equivalents.
+_SAMPLE_IXBRL_BANK = """
+<html><body>
+<span><ix:nonNumeric name='in-capmkt:Symbol' contextRef='OneD'>HDFCBANK</ix:nonNumeric></span>
+<span><ix:nonNumeric name='in-capmkt:DateOfEndOfReportingPeriod' contextRef='OneD'>30-06-2026</ix:nonNumeric></span>
+<td><ix:nonFraction name='in-capmkt:InterestEarned' contextRef='OneD' unitRef='INR'>90,575.33</ix:nonFraction></td>
+<td><ix:nonFraction name='in-capmkt:ProfitLossFromOrdinaryActivitiesBeforeTax' contextRef='OneD' unitRef='INR'>27,193.16</ix:nonFraction></td>
+<td><ix:nonFraction name='in-capmkt:ProfitLossForThePeriod' contextRef='OneD' unitRef='INR'>20,382.69</ix:nonFraction></td>
+<td><ix:nonFraction name='in-capmkt:TaxExpense' contextRef='OneD' unitRef='INR'>6,810.47</ix:nonFraction></td>
+<td><ix:nonFraction name='in-capmkt:BasicEarningsPerShareBeforeExtraordinaryItems' contextRef='OneD' unitRef='INR'>12.5</ix:nonFraction></td>
+</body></html>
+"""
+
 
 # ------------------------------------------------------------------- parse_ixbrl
 def test_parse_ixbrl_extracts_numeric_and_text_facts():
@@ -73,6 +89,39 @@ def test_extract_filing_builds_period_end_and_values():
 
 def test_extract_filing_none_when_no_period_end():
     assert xi.extract_filing("<html>no facts here</html>", "X") is None
+
+
+# ------------------------------------------------------ bank/NBFC taxonomy fallback
+def test_extract_filing_resolves_bank_format_tags():
+    """A bank filing has none of the industrial-format tags at all -- each
+    factor must resolve via its bank-taxonomy fallback tag instead."""
+    filing = xi.extract_filing(_SAMPLE_IXBRL_BANK, "HDFCBANK")
+    assert filing is not None
+    assert filing.values["revenue_from_operations"] == 90575.33  # via InterestEarned
+    assert filing.values["profit_before_tax"] == 27193.16        # via ProfitLossFromOrdinaryActivitiesBeforeTax
+    assert filing.values["net_profit"] == 20382.69                # via ProfitLossForThePeriod
+    assert filing.values["eps_basic"] == 12.5                     # via BasicEarningsPerShareBeforeExtraordinaryItems
+    assert filing.values["tax_expense"] == 6810.47                # same tag name in both formats
+
+
+def test_extract_filing_bank_format_has_no_debt_equity_or_finance_costs():
+    """debt_equity_ratio/finance_costs are deliberately industrial-only --
+    a bank filing genuinely has neither tag, and no fallback is defined."""
+    filing = xi.extract_filing(_SAMPLE_IXBRL_BANK, "HDFCBANK")
+    assert filing.values["debt_equity_ratio"] is None
+    assert filing.values["finance_costs"] is None
+
+
+def test_first_tagged_value_prefers_industrial_tag_when_both_present():
+    """When a filing (unusually) tags both formats, the industrial tag --
+    listed first -- wins, matching the priority order documented on
+    FACTOR_TAGS."""
+    facts = {"RevenueFromOperations": 100.0, "InterestEarned": 200.0}
+    assert xi._first_tagged_value(facts, xi.FACTOR_TAGS["revenue_from_operations"]) == 100.0
+
+
+def test_first_tagged_value_none_when_no_candidate_present():
+    assert xi._first_tagged_value({}, ("A", "B")) is None
 
 
 # --------------------------------------------------------------- date/time helpers
