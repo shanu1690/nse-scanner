@@ -4,6 +4,8 @@ Usage:
   nse-scan scan --mode all|momentum|options [--refresh] [--top N] [--fade|--no-fade]
   nse-scan backtest [--period 6m] [--min-score 60] [--fade|--no-fade]
   nse-scan factors [--period 3] [--min-score 55]
+  nse-scan fusion [--period N] [--fundamentals-db path]
+  nse-scan regime [--period N]
   nse-scan track [--status] [--top N] [--fade|--no-fade]
   nse-scan watch SYMBOL
   nse-scan universe            # list current universe
@@ -184,6 +186,20 @@ def cmd_backtest(args):
 def cmd_factors(args):
     from nse.backtest import run_factor_analysis
     run_factor_analysis(months=args.period, min_score=args.min_score)
+
+
+def cmd_fusion(args):
+    from nse.fusion import run_fusion_audit
+    result = run_fusion_audit(months=args.period, fundamentals_db=args.fundamentals_db)
+    if not result["ok"]:
+        sys.exit(1)
+
+
+def cmd_regime(args):
+    from nse.regime import run_regime_switch_audit
+    result = run_regime_switch_audit(months=args.period)
+    if not result["ok"]:
+        sys.exit(1)
 
 
 def cmd_watch(args):
@@ -418,6 +434,20 @@ def main():
     p_f.add_argument("--period", type=int, default=3, help="months of history (default 3)")
     p_f.add_argument("--min-score", type=float, default=55.0)
     p_f.set_defaults(func=cmd_factors)
+
+    p_fu = sub.add_parser("fusion", help="Phase 6: calibrated fusion model audit (Brier, "
+                          "reliability, lift vs the technical-score baseline)")
+    p_fu.add_argument("--period", type=int, default=None,
+                      help="months of history (default: all available)")
+    p_fu.add_argument("--fundamentals-db", default=None,
+                      help="fundamentals PointInTimeStore path (default: data/pit.db)")
+    p_fu.set_defaults(func=cmd_fusion)
+
+    p_rg = sub.add_parser("regime", help="Phase 6: regime-conditional style switching vs "
+                          "the static rule, out-of-sample")
+    p_rg.add_argument("--period", type=int, default=None,
+                      help="months of history (default: all available)")
+    p_rg.set_defaults(func=cmd_regime)
 
     p_w = sub.add_parser("watch", help="deep-dive one symbol")
     p_w.add_argument("symbol")
