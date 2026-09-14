@@ -233,6 +233,33 @@ def cmd_watch(args):
         api.close()
 
 
+def cmd_news(args):
+    """Fetch the configured RSS feeds and store new items (point-in-time,
+    deduped by URL). With --symbol, also prints what's stored for it."""
+    import datetime
+
+    from nse.news import rss_ingest
+    from nse.news.store import NewsStore
+
+    db_path = args.db or os.path.join(ROOT, "data", "news.db")
+    items = rss_ingest.fetch_all(SYMBOLS)
+    with NewsStore(db_path) as store:
+        added = store.put(items)
+        print(f"Fetched {len(items)} items from {len(rss_ingest.FEEDS)} feeds, "
+              f"{added} new (deduped by URL). Store: {db_path}")
+        if args.symbol:
+            sym = args.symbol.upper()
+            rows = store.as_of(sym, datetime.datetime.now(datetime.timezone.utc),
+                               limit=args.limit)
+            if not rows:
+                print(f"No stored news for {sym}.")
+            for r in rows:
+                est = " (estimated timestamp)" if r["published_at_estimated"] else ""
+                print(f"\n  [{r['published_at']}{est}] {r['source']}: {r['headline']}")
+                print(f"    {r['summary']}")
+                print(f"    {r['url']}")
+
+
 def cmd_universe(_args):
     print(f"Universe: {len(SYMBOLS)} symbols")
     for s in SYMBOLS:
@@ -398,6 +425,13 @@ def main():
 
     p_u = sub.add_parser("universe", help="list universe")
     p_u.set_defaults(func=cmd_universe)
+
+    p_news = sub.add_parser("news", help="fetch RSS news and store it (point-in-time)")
+    p_news.add_argument("--db", default=None, help="news store path (default: data/news.db)")
+    p_news.add_argument("--symbol", default=None,
+                        help="print stored news for one symbol after fetching")
+    p_news.add_argument("--limit", type=int, default=10)
+    p_news.set_defaults(func=cmd_news)
 
     p_site = sub.add_parser("site", help="emit JSON data for the web dashboard")
     p_site.add_argument("--out", default="site", help="output dir (default: site)")

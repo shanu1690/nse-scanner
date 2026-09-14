@@ -19,6 +19,7 @@ dependencies = [
     "logzero>=1.7",
     "websocket-client>=1.7",
     "pyotp>=2.9",
+    "feedparser>=6.0",
 ]
 
 [project.optional-dependencies]
