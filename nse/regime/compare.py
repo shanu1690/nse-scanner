@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import os
 
+import numpy as np
 import yaml
 
 from .. import backtest as bt
@@ -19,6 +20,16 @@ from .. import data as data_mod
 from .classify import build_regime_history
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+N_LABEL_PERMUTATIONS = 1000
+# How often a random reassignment of the SAME regime labels to the SAME
+# dates must fail to match the real lift, before "regime beats static" is
+# trusted. Added after a live run: the bootstrap-CI bar alone (regime_ci[0]
+# > 0 and regime_lift > static_lift) passed on a real held-out block whose
+# permutation p-value came back at 0.056 -- i.e. random label-to-date
+# reassignment produced a lift this large about 1 time in 18, which is not
+# a result worth calling a win. See _regime_label_permutation_test().
+PERMUTATION_P_THRESHOLD = 0.05
 
 # In a shock regime, Section 4.4 calls for "reduced or zero exposure", not a
 # same-style call -- so this maps a regime label to which SIGNAL SET to use
@@ -84,6 +95,51 @@ def _regime_label_counts(signals, regime_history) -> dict:
     return counts
 
 
+def _regime_label_permutation_test(momentum_signals, fade_signals, regime_history,
+                                    min_score: float, real_lift: float,
+                                    n_perm: int = N_LABEL_PERMUTATIONS,
+                                    seed: int = bt.BOOTSTRAP_SEED) -> "tuple[float, int] | None":
+    """Reassign the SAME multiset of regime labels to the SAME dates at
+    random (preserving how many days were trending_up/mean_reverting/
+    trending_down/high_vol_shock -- only WHICH day got which label is
+    shuffled), rebuild the regime-routed signal set under that shuffled
+    assignment, and see how often a lift at least as large as `real_lift`
+    turns up by chance. This is the regime-specific analogue of
+    backtest.py's label_shuffle_control(): that test shuffles OUTCOMES to
+    check a score isn't paired with the wrong future; this one shuffles
+    LABEL ASSIGNMENT to check the regime rule isn't just getting credit for
+    a fortunate date split. Returns (p_value, n_valid_permutations), or
+    None if there are too few distinct dates/labels to permute at all.
+    """
+    dates = sorted(set(regime_history.index) &
+                   (set(s.date for s in fade_signals) | set(s.date for s in momentum_signals)))
+    if len(dates) < 10:
+        return None
+    real_labels = [regime_history.loc[d, "regime"] for d in dates]
+    if len(set(real_labels)) < 2:
+        return None  # every day classified the same way -- nothing to shuffle
+
+    rng = np.random.default_rng(seed)
+    null_lifts = []
+    for _ in range(n_perm):
+        shuffled = rng.permutation(real_labels)
+        label_map = dict(zip(dates, shuffled))
+        fake_history = regime_history.copy()
+        fake_history["regime"] = [label_map.get(d, fake_history.loc[d, "regime"])
+                                   for d in fake_history.index]
+        try:
+            signals = _regime_style_signals(momentum_signals, fade_signals, fake_history)
+            null_lifts.append(bt._lift_stat(signals, min_score, bt.FIXED_TARGET_HORIZON,
+                                             bt.FIXED_TARGET_PCT))
+        except ZeroDivisionError:
+            continue
+    if not null_lifts:
+        return None
+    null_lifts = np.array(null_lifts)
+    p_value = float((null_lifts >= real_lift).mean())
+    return p_value, len(null_lifts)
+
+
 def run_regime_switch_audit(months=None, quiet=False) -> dict:
     config = _load_config()
     universe = config["universe"]["symbols"]
@@ -143,16 +199,37 @@ def run_regime_switch_audit(months=None, quiet=False) -> dict:
 
     static_ci = bt.bootstrap_ci(static_signals, _lift)
     regime_ci = bt.bootstrap_ci(regime_signals, _lift)
+    perm_result = _regime_label_permutation_test(
+        held_out_mom, held_out_fade, regime_history, min_score, regime_lift)
 
-    # Conservative verdict, per Section 4.4: only call it a win if the
-    # regime rule's own lift is both numerically better AND its bootstrap
-    # CI's lower bound clears zero (a real, not just directionally lucky,
-    # edge) -- anything short of that keeps the static rule.
-    beats_static = (regime_ci is not None and regime_ci[0] > 0 and regime_lift > static_lift)
+    # Conservative verdict, per Section 4.4: the regime rule's own lift must
+    # be numerically better, its bootstrap CI's lower bound must clear zero,
+    # AND the label-permutation test must show the real lift isn't something
+    # a random date-to-label reassignment produces almost as often anyway --
+    # added after a live run passed the first two bars with a permutation
+    # p-value of 0.056 (see PERMUTATION_P_THRESHOLD). Anything short of all
+    # three keeps the static rule.
+    passes_ci_bar = (regime_ci is not None and regime_ci[0] > 0 and regime_lift > static_lift)
+    passes_permutation_bar = perm_result is not None and perm_result[0] < PERMUTATION_P_THRESHOLD
+    beats_static = passes_ci_bar and passes_permutation_bar
 
     static_ci_str = f"[{static_ci[0]:+.1%}, {static_ci[1]:+.1%}]" if static_ci else "n/a"
     regime_ci_str = f"[{regime_ci[0]:+.1%}, {regime_ci[1]:+.1%}]" if regime_ci else "n/a"
     regime_counts = _regime_label_counts(held_out_fade + held_out_mom, regime_history)
+    if perm_result is not None:
+        p_value, n_valid_perm = perm_result
+        perm_str = f"p={p_value:.3f} (n={n_valid_perm} label permutations)"
+    else:
+        perm_str = "n/a (too few distinct dates/labels to permute)"
+
+    if beats_static:
+        verdict = "REGIME-CONDITIONAL beats the static rule"
+    elif passes_ci_bar and not passes_permutation_bar:
+        verdict = ("NO -- cleared the bootstrap-CI bar but FAILED the label-permutation "
+                   "check (a random date-to-label reassignment produces a lift this large "
+                   "too often to trust) -- keeping the static rule")
+    else:
+        verdict = "NO clear out-of-sample improvement -- keeping the static rule"
 
     lines = [
         f"Regime-conditional switching vs static style ('{'fade' if static_fade else 'momentum'}'), "
@@ -161,10 +238,14 @@ def run_regime_switch_audit(months=None, quiet=False) -> dict:
         f"95% CI {static_ci_str}  (n={len(static_signals)})",
         f"  Regime-conditional:                lift {regime_lift:+.1%}  "
         f"95% CI {regime_ci_str}  (n={len(regime_signals)})",
+        f"  Label-permutation test: {perm_str}  "
+        f"(threshold: p < {PERMUTATION_P_THRESHOLD})",
         f"  Held-out regime mix: {regime_counts}",
-        f"  Verdict: {'REGIME-CONDITIONAL beats the static rule' if beats_static else 'NO clear out-of-sample improvement -- keeping the static rule'}",
-        "  (bar: regime lift's 95% CI lower bound must clear zero AND exceed the "
-        "static lift's point estimate -- a merely-higher point estimate is not enough)",
+        f"  Verdict: {verdict}",
+        "  (bar: regime lift's 95% CI lower bound must clear zero, exceed the static "
+        "lift's point estimate, AND survive the label-permutation check -- a merely-"
+        "higher point estimate with a CI that clears zero is not enough on its own, "
+        "since that alone was fooled by a fortunate date split in a real run)",
     ]
     text = "\n".join(lines)
     if not quiet:
@@ -172,6 +253,8 @@ def run_regime_switch_audit(months=None, quiet=False) -> dict:
 
     return {
         "ok": True, "text": text, "beats_static": beats_static,
+        "passes_ci_bar": passes_ci_bar, "passes_permutation_bar": passes_permutation_bar,
+        "permutation_p_value": perm_result[0] if perm_result else None,
         "static_lift": static_lift, "static_ci": static_ci,
         "regime_lift": regime_lift, "regime_ci": regime_ci,
         "regime_counts": regime_counts,

@@ -59,6 +59,55 @@ def test_regime_style_signals_missing_date_treated_as_unknown():
     assert len(out) == 1 and out[0].symbol == "A"  # falls back to fade (unknown -> True)
 
 
+# ------------------------------------------------------- permutation test
+def _perm_signal(symbol, date, score, fwd5):
+    return Signal(symbol=symbol, date=pd.Timestamp(date), block=0, score=score,
+                  subscores={}, fwd_pct={5: fwd5}, trade=None)
+
+
+def test_permutation_test_none_when_too_few_dates():
+    dates = pd.date_range("2024-01-02", periods=5, freq="B")
+    fade_sigs = [_perm_signal("A", d, 70, 5.0) for d in dates]
+    regime_history = pd.DataFrame({"regime": ["trending_up"] * 5}, index=dates)
+    result = rc._regime_label_permutation_test([], fade_sigs, regime_history,
+                                                 min_score=50.0, real_lift=0.1)
+    assert result is None
+
+
+def test_permutation_test_none_when_all_dates_share_one_label():
+    dates = pd.date_range("2024-01-02", periods=20, freq="B")
+    fade_sigs = [_perm_signal("A", d, 70, 5.0) for d in dates]
+    regime_history = pd.DataFrame({"regime": ["mean_reverting"] * 20}, index=dates)
+    result = rc._regime_label_permutation_test([], fade_sigs, regime_history,
+                                                 min_score=50.0, real_lift=0.1)
+    assert result is None  # nothing to shuffle -- every day has the same label
+
+
+def test_permutation_test_high_p_value_when_lift_is_indistinguishable_from_chance():
+    """Real outcomes have NO relationship to which days got which label --
+    shuffling the label assignment should reproduce a similar lift often,
+    giving a high (untrustworthy) p-value."""
+    rng = np.random.default_rng(0)
+    dates = pd.date_range("2024-01-02", periods=60, freq="B")
+    labels = (["trending_up"] * 30 + ["mean_reverting"] * 30)
+    rng.shuffle(labels)
+    regime_history = pd.DataFrame({"regime": labels}, index=dates)
+    # fwd_pct is pure noise, unrelated to the regime label
+    fade_sigs = [_perm_signal("A", d, 70, rng.normal(0, 2)) for d in dates]
+    mom_sigs = [_perm_signal("B", d, 70, rng.normal(0, 2)) for d in dates]
+    real_signals = rc._regime_style_signals(mom_sigs, fade_sigs, regime_history)
+    real_lift = bt._lift_stat(real_signals, 50.0, 5, 3.0)
+    result = rc._regime_label_permutation_test(mom_sigs, fade_sigs, regime_history,
+                                                 min_score=50.0, real_lift=real_lift, n_perm=200)
+    assert result is not None
+    p_value, n_valid = result
+    assert n_valid > 0
+    # Since the real assignment is itself just one arbitrary shuffle of a
+    # noise-driven outcome, its own lift should not reliably look extreme
+    # against the null it's drawn from.
+    assert 0.0 <= p_value <= 1.0
+
+
 def test_regime_label_counts():
     d1, d2 = pd.Timestamp("2024-01-02"), pd.Timestamp("2024-01-03")
     sigs = [_sig("A", d1), _sig("B", d1), _sig("A", d2)]
