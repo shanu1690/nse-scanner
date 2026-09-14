@@ -1,136 +1,226 @@
 # nse-scanner configuration
 
 universe:
-  # Nifty 50 + Nifty Next 50 + liquid F&O names (~150 symbols, NSE codes)
+  # NSE F&O-eligible underlyings (live, verified via NSE's own
+  # /api/underlying-information endpoint on 2026-09-13) -- 210 symbols.
+  # This is NSE's own definition of "liquid enough for derivatives",
+  # which is a more defensible bar than a hand-picked subset. NSE revises
+  # F&O eligibility roughly every 6 months; re-fetch that endpoint
+  # periodically and diff against this list to keep it current. 14 names
+  # previously in this list lost F&O eligibility and were dropped:
+  # ATGL, BALKRISIND, BERGEPAINT, EASEMYTRIP, EXIDEIND, IRB, IRCTC,
+  # PIRAMALFIN, SYNGENE, TATACHEM, TATACOMM, TITAGARH, UBL, ZEEL.
   symbols:
-    - RELIANCE
-    - TCS
-    - HDFCBANK
-    - ICICIBANK
-    - INFY
-    - HINDUNILVR
-    - ITC
-    - SBIN
-    - BHARTIARTL
-    - KOTAKBANK
-    - LT
-    - AXISBANK
-    - BAJFINANCE
-    - MARUTI
-    - SUNPHARMA
-    - TITAN
-    - ULTRACEMCO
-    - WIPRO
-    - HCLTECH
-    - ADANIPORTS
-    - TATASTEEL
-    - NTPC
-    - POWERGRID
-    - ONGC
-    - COALINDIA
-    - NESTLEIND
-    - ASIANPAINT
-    - M&M
-    - TECHM
-    - BAJAJFINSV
-    - HDFCLIFE
-    - SBILIFE
-    - JSWSTEEL
-    - TATACONSUM
-    - CIPLA
-    - DRREDDY
-    - APOLLOHOSP
-    - GRASIM
-    - INDUSINDBK
-    - BRITANNIA
-    - DIVISLAB
-    - HINDALCO
-    - HEROMOTOCO
-    - EICHERMOT
-    - LTM
-    - BAJAJ-AUTO
+    - 360ONE
+    - ABB
+    - ABCAPITAL
+    - ADANIENSOL
     - ADANIENT
     - ADANIGREEN
-    - ADANIENSOL
-    - ATGL
+    - ADANIPORTS
+    - ADANIPOWER
+    - ALKEM
+    - AMBER
+    - AMBUJACEM
+    - ANGELONE
+    - APLAPOLLO
+    - APOLLOHOSP
+    - ASHOKLEY
+    - ASIANPAINT
+    - ASTRAL
+    - ATHERENERG
+    - AUBANK
+    - AUROPHARMA
+    - AXISBANK
+    - BAJAJ-AUTO
+    - BAJAJFINSV
+    - BAJAJHLDNG
+    - BAJFINANCE
     - BANDHANBNK
     - BANKBARODA
+    - BANKINDIA
+    - BDL
     - BEL
+    - BHARATFORG
+    - BHARTIARTL
     - BHEL
     - BIOCON
+    - BLUESTARCO
     - BOSCHLTD
+    - BPCL
+    - BRITANNIA
+    - BSE
+    - CAMS
     - CANBK
+    - CDSL
+    - CGPOWER
     - CHOLAFIN
+    - CIPLA
+    - COALINDIA
+    - COCHINSHIP
+    - COFORGE
+    - COLPAL
     - CONCOR
-    - DLF
+    - CROMPTON
+    - CUMMINSIND
     - DABUR
-    - EASEMYTRIP
-    - EXIDEIND
-    - GODREJCP
+    - DELHIVERY
+    - DIVISLAB
+    - DIXON
+    - DLF
+    - DMART
+    - DRREDDY
+    - EICHERMOT
+    - ETERNAL
+    - FEDERALBNK
+    - FORCEMOT
+    - FORTIS
+    - GAIL
+    - GLENMARK
     - GMRAIRPORT
+    - GODFRYPHLP
+    - GODREJCP
+    - GODREJPROP
+    - GRASIM
+    - GVT&D
     - HAL
     - HAVELLS
-    - IEX
-    - IDFCFIRSTB
-    - INDIGO
-    - IOC
-    - IRCTC
-    - IRFC
-    - JINDALSTEL
-    - JUBLFOOD
-    - LICI
-    - LUPIN
-    - MUTHOOTFIN
-    - NATIONALUM
-    - NMDC
-    - OBEROIRLTY
-    - PAGEIND
-    - PIRAMALFIN
-    - PFC
-    - PIDILITIND
-    - PIIND
-    - POLYCAB
-    - PNB
-    - RECLTD
-    - SAIL
-    - SIEMENS
-    - SRF
-    - TATAPOWER
-    - TVSMOTOR
-    - UBL
-    - VEDL
-    - ETERNAL
-    - DMART
-    - NYKAA
-    - PAYTM
-    - IRB
-    - ASTRAL
-    - BALKRISIND
-    - ABB
-    - AMBUJACEM
-    - APLAPOLLO
-    - AUROPHARMA
-    - BERGEPAINT
-    - DIXON
-    - FEDERALBNK
-    - GAIL
+    - HCLTECH
     - HDFCAMC
+    - HDFCBANK
+    - HDFCLIFE
+    - HEROMOTOCO
+    - HINDALCO
+    - HINDPETRO
+    - HINDUNILVR
+    - HINDZINC
+    - HYUNDAI
+    - ICICIBANK
     - ICICIGI
     - ICICIPRULI
+    - IDEA
+    - IDFCFIRSTB
+    - IEX
     - INDHOTEL
+    - INDIANB
+    - INDIGO
+    - INDUSINDBK
+    - INDUSTOWER
+    - INFY
+    - INOXWIND
+    - IOC
+    - IREDA
+    - IRFC
+    - ITC
+    - JINDALSTEL
+    - JIOFIN
+    - JSWENERGY
+    - JSWSTEEL
+    - JUBLFOOD
+    - KALYANKJIL
+    - KAYNES
     - KEI
+    - KFINTECH
+    - KOTAKBANK
+    - KPITTECH
+    - LAURUSLABS
+    - LICHSGFIN
+    - LICI
+    - LODHA
+    - LT
+    - LTF
+    - LTM
+    - LUPIN
+    - M&M
+    - MAHABANK
+    - MANAPPURAM
+    - MANKIND
     - MARICO
+    - MARUTI
+    - MAXHEALTH
+    - MAZDOCK
     - MCX
+    - MFSL
+    - MOTHERSON
+    - MOTILALOFS
+    - MPHASIS
+    - MUTHOOTFIN
+    - NAM-INDIA
+    - NATIONALUM
+    - NAUKRI
+    - NBCC
+    - NESTLEIND
     - NHPC
+    - NMDC
+    - NTPC
+    - NYKAA
+    - OBEROIRLTY
+    - OFSS
+    - OIL
+    - ONGC
+    - PAGEIND
+    - PATANJALI
+    - PAYTM
+    - PERSISTENT
     - PETRONET
+    - PFC
+    - PGEL
+    - PHOENIXLTD
+    - PIDILITIND
+    - PIIND
+    - PNB
+    - PNBHOUSING
+    - POLICYBZR
+    - POLYCAB
+    - POWERGRID
+    - POWERINDIA
+    - PREMIERENE
+    - PRESTIGE
+    - RADICO
+    - RBLBANK
+    - RECLTD
+    - RELIANCE
+    - RVNL
+    - SAGILITY
+    - SAIL
     - SBICARD
-    - SYNGENE
-    - TATACHEM
-    - TATACOMM
-    - TITAGARH
+    - SBILIFE
+    - SBIN
+    - SHREECEM
+    - SHRIRAMFIN
+    - SIEMENS
+    - SOLARINDS
+    - SONACOMS
+    - SRF
+    - SUNPHARMA
+    - SUPREMEIND
+    - SUZLON
+    - SWIGGY
+    - TATACONSUM
+    - TATAELXSI
+    - TATAPOWER
+    - TATASTEEL
+    - TCS
+    - TECHM
+    - TIINDIA
+    - TITAN
+    - TMPV
+    - TORNTPHARM
     - TRENT
+    - TVSMOTOR
+    - ULTRACEMCO
+    - UNIONBANK
+    - UNITDSPR
+    - UNOMINDA
+    - UPL
     - VBL
-    - ZEEL
+    - VEDL
+    - VMM
+    - VOLTAS
+    - WAAREEENER
+    - WIPRO
+    - YESBANK
+    - ZYDUSLIFE
 
 scanner:
   momentum:
@@ -146,7 +236,12 @@ scanner:
     top_n: 12
 
 data:
-  lookback_days: 560
+  # 860 calendar days (~68% trading-day ratio observed for this universe)
+  # clears backtest.py's walk-forward sample-size gate with a comfortable
+  # margin: 3 rolling + 1 held-out block of >=42 trading days each, not
+  # sitting right at the bare minimum. See nse/backtest.py's
+  # _sample_size_gate_message() for the derivation.
+  lookback_days: 860
   index_benchmark: "^NSEI"
   # Price + options data source: "smartapi" (Angel One free API, requires a
   # `smartapi:` block in secrets.yaml) or "nse" (yfinance prices + NSE public
