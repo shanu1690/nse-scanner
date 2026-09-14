@@ -231,7 +231,8 @@ def cmd_watch(args):
     api, exc_type = _new_options_session()
     try:
         raw = api.option_chain_equity(symbol)
-        o = opt.analyze_option_chain(symbol, raw, trend=row)
+        result = opt.select_option_idea(symbol, raw, trend=row, budget=args.budget)
+        o = result["analysis"]
         if o.get("error"):
             print(f"  {o['error']}")
         else:
@@ -243,6 +244,24 @@ def cmd_watch(args):
                 print(f"    strike {p['strike']} prem {p['premium']} breakeven {p['breakeven']} iv {p['iv']}")
             for reason in o["reasons"]:
                 print(f"  * {reason}")
+
+            print(f"\n  Strategy idea (Rs {args.budget:,.0f} budget cap):")
+            idea = result["idea"]
+            if idea is None:
+                print(f"    NO QUALIFYING TRADE -- {result['reason']}")
+                for r in result["rejected"]:
+                    print(f"      rejected: {r['kind']} -- {r['detail']}")
+            else:
+                legs_str = ", ".join(f"{leg['action']} {leg['side']} {leg['strike']} @ {leg['premium']:.2f}"
+                                     for leg in idea["legs"])
+                print(f"    strategy: {idea['strategy']}  legs: {legs_str}")
+                max_profit_str = "unlimited" if idea["max_profit"] is None else f"Rs {idea['max_profit']:,.0f}"
+                print(f"    cost: Rs {idea['cost']:,.0f}  max loss: Rs {idea['max_loss']:,.0f}  "
+                      f"max profit: {max_profit_str}")
+                prob = idea.get("probability")
+                prob_str = f"{prob:.0%}" if prob is not None else "n/a"
+                print(f"    breakeven: {idea['breakeven']}  probability: {prob_str}")
+                print(f"    {idea['thesis']}")
     except (exc_type, ValueError) as exc:
         print(f"  n/a: {exc}")
     finally:
@@ -451,6 +470,8 @@ def main():
 
     p_w = sub.add_parser("watch", help="deep-dive one symbol")
     p_w.add_argument("symbol")
+    p_w.add_argument("--budget", type=float, default=opt.MAX_BUDGET_RS,
+                     help=f"option idea budget cap in Rs (default {opt.MAX_BUDGET_RS:,.0f})")
     p_w.set_defaults(func=cmd_watch)
 
     p_u = sub.add_parser("universe", help="list universe")

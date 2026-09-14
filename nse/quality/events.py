@@ -26,6 +26,7 @@ _VALID_KINDS = {
     "provider_fallback",         # SmartAPI -> yfinance, any cause
     "unadjusted_split_rejected", # candles() caught a split/bonus-shaped jump
     "regime_mismatch_drop",      # _clean_combined() dropped a stale segment
+    "d_oi_cross_source_unavailable",  # NSE cross-source fetch for change-in-OI failed
 }
 
 

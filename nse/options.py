@@ -4,11 +4,14 @@
 - IV rank (rich/cheap vs own history, via local snapshots)
 - Expected move (ATM straddle + IV-based)
 - Concrete strike picks with premium & breakeven
+- (Phase 7) a concrete strategy idea under the Rs 10,000 budget cap --
+  see select_option_idea() and PROJECT_BRIEF.md Section 5
 """
 
 import csv
 import io
 import json
+import math
 import os
 from datetime import datetime, timedelta
 
@@ -149,10 +152,88 @@ def _chain_to_frame(records, expiry):
                 "volume": float(leg.get("totalTradedVolume", 0) or 0),
                 "iv": float(leg.get("impliedVolatility", 0) or 0),
                 "premium": float(leg.get("lastPrice", 0) or 0),
+                # bid/ask -- NSE's v3 JSON names these buyPrice1/sellPrice1
+                # (best bid/ask, depth level 1). SmartAPI-sourced chains
+                # don't populate these (Angel's REST quote doesn't expose
+                # depth in the fields this repo currently reads), so they
+                # come back 0 there -- the quality-bar check below treats
+                # 0/0 as "unknown, not necessarily bad" rather than a fail.
+                "bid": float(leg.get("buyPrice1", 0) or 0),
+                "ask": float(leg.get("sellPrice1", 0) or 0),
             })
     if not rows:
         return None
     return pd.DataFrame(rows)
+
+
+def cross_source_d_oi(symbol, raw, *, session_factory=None):
+    """Fix the documented d_oi gap (PROJECT_BRIEF.md Section 3: "d_oi is
+    always 0 in SmartAPI REST quotes -- fix by cross-sourcing OI change").
+
+    Angel SmartAPI's getMarketData(FULL) REST quotes have no change-in-OI
+    field at all (see nse/smartapi.py's own docstring), so every leg of a
+    SmartAPI-sourced chain reports changeinOpenInterest=0. NSE's own public
+    option-chain JSON computes this figure itself and that endpoint already
+    works reliably in this repo (nse/nse_api.py's NSESession is the "nse"
+    provider fallback) -- so when a chain shows EVERY leg's d_oi at exactly
+    zero (SmartAPI's signature; a real chain with genuinely flat OI change
+    across every single strike/side on a trading day would itself be
+    implausible), fetch NSE's public chain for the same symbol/expiry and
+    copy its real changeinOpenInterest onto matching strikes.
+
+    Mutates and returns `raw`. Best-effort: any failure (network, no
+    matching strikes, NSE blocked) leaves d_oi at 0 -- exactly today's
+    behaviour, not a regression -- and is logged via nse.quality.events for
+    coverage accounting rather than silently vanishing. `session_factory`
+    lets callers/tests inject a fake NSE session instead of a live one.
+    """
+    from nse.quality.events import log_event
+
+    records = raw.get("records") or {}
+    data = records.get("data") or []
+    legs = [leg for item in data for leg in (item.get("CE"), item.get("PE")) if leg]
+    if not legs or not all((leg.get("changeinOpenInterest") or 0) == 0 for leg in legs):
+        return raw  # already has real d_oi (or chain is empty) -- nothing to do
+
+    expiry = _row_expiry(data[0]) if data else None
+    try:
+        if session_factory is not None:
+            session = session_factory()
+        else:
+            from nse.nse_api import NSESession
+            session = NSESession()
+        try:
+            nse_raw = session.option_chain_equity(symbol, expiry=expiry)
+        finally:
+            close = getattr(session, "close", None)
+            if close:
+                close()
+    except Exception as exc:  # best-effort -- any failure mode, never propagate
+        log_event(symbol, "d_oi_cross_source_unavailable", str(exc))
+        return raw
+
+    nse_data = ((nse_raw or {}).get("records") or {}).get("data") or []
+    doi_lookup = {}
+    for item in nse_data:
+        strike = item.get("strikePrice")
+        for side in ("CE", "PE"):
+            leg = item.get(side)
+            if leg is not None:
+                doi_lookup[(strike, side)] = leg.get("changeinOpenInterest", 0) or 0
+
+    patched = 0
+    for item in data:
+        strike = item.get("strikePrice")
+        for side in ("CE", "PE"):
+            leg = item.get(side)
+            key = (strike, side)
+            if leg is not None and key in doi_lookup:
+                leg["changeinOpenInterest"] = doi_lookup[key]
+                patched += 1
+    if patched == 0:
+        log_event(symbol, "d_oi_cross_source_unavailable",
+                  "NSE chain fetched but no matching strikes")
+    return raw
 
 
 def _max_pain(records, expiry):
@@ -213,11 +294,19 @@ def iv_rank(symbol, current_iv, today):
     return round(pct, 0), len(past), history
 
 
-def analyze_option_chain(symbol, raw, trend=None):
+def analyze_option_chain(symbol, raw, trend=None, cross_source_oi=True):
     """raw: NSE /api/option-chain-equities JSON. trend: momentum snapshot dict.
 
     Returns an analysis dict with signal, reasons and strike picks.
+
+    cross_source_oi=True (default) runs cross_source_d_oi() first, which
+    may perform an extra live NSE fetch when (and only when) the supplied
+    chain shows the SmartAPI d_oi gap (every leg's change-in-OI at exactly
+    0). Pass False to skip that -- e.g. in tests, or when a caller has
+    already cross-sourced/doesn't want the extra network round-trip.
     """
+    if cross_source_oi:
+        raw = cross_source_d_oi(symbol, raw)
     records = raw.get("records") or {}
     expiries = records.get("expiryDates") or []
     if not expiries:
@@ -381,4 +470,278 @@ def analyze_option_chain(symbol, raw, trend=None):
         "amount_per_lot": amount_per_lot,
         "picks": picks[:3],
         "reasons": reasons,
+        # Internal reuse for select_option_idea() below -- not part of the
+        # stable display contract; a leading underscore flags "may change,
+        # don't build a UI on this key directly".
+        "_frame": frame,
+        "_step": step,
     }
+
+
+# ===========================================================================
+# Phase 7: a concrete strategy idea under the Rs 10,000 budget cap.
+# PROJECT_BRIEF.md Section 5's rules, enforced here:
+#   1. Filter, don't force -- "no qualifying option trade today" is valid.
+#   2. Prefer defined-risk debit spreads over naked longs when both qualify.
+#   3. Rank by probability, not cheapness (see rank_ideas()).
+#   4. Refuse the traps -- near-expiry, thin OI, wide bid-ask spread.
+#   5. Never recommend selling/writing options (nothing here ever does).
+#   6. Beginner mode: cost, max loss, breakeven, thesis, DTE, payoff data.
+#   7. Paper-trade gate is tracker.py's job, not this module's.
+# ===========================================================================
+
+MAX_BUDGET_RS = 10_000.0
+MIN_DTE_DAYS = 2                    # rule 4: block same-day/next-day expiry
+MIN_LEG_OI = 500                    # rule 4: minimum open interest per leg
+MAX_SPREAD_COST_FRACTION = 0.15     # rule 4: bid-ask spread vs premium ceiling
+SPREAD_WIDTH_STEPS = (1, 2, 3, 4)   # short leg this many strikes beyond the long leg
+PAYOFF_POINTS = 21                  # samples across the payoff diagram's price range
+PAYOFF_RANGE_PCT = 0.15             # +/- range around spot the diagram covers
+
+
+def _norm_cdf(x: float) -> float:
+    return 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
+
+
+def prob_finish_itm(spot, strike, iv_pct, dte_days, side, r: float = 0.0):
+    """Black-Scholes risk-neutral probability of finishing in-the-money at
+    expiry (N(d2) for a call, N(-d2) for a put) -- a standard, explainable
+    proxy for "probability of profit at expiry" a beginner tool can state
+    plainly. This is NOT a claim of real-world statistical edge (it's the
+    market-implied probability under the option's own IV), which is the
+    honest thing to call it: see the plain-English thesis text.
+
+    r=0 (no risk-free-rate term): at the day-to-a-few-months tenors this
+    tool deals in, the rate barely moves the estimate, and dropping it
+    keeps the formula (and its explanation to a non-quant user) simpler.
+
+    Returns None when any input can't safely support the model (non-
+    positive spot/strike/dte, missing/zero IV).
+    """
+    if not spot or spot <= 0 or not strike or strike <= 0:
+        return None
+    if not dte_days or dte_days <= 0:
+        return None
+    if not iv_pct or iv_pct <= 0:
+        return None
+    sigma = iv_pct / 100.0
+    t = dte_days / 365.0
+    try:
+        d1 = (math.log(spot / strike) + (r + 0.5 * sigma * sigma) * t) / (sigma * math.sqrt(t))
+        d2 = d1 - sigma * math.sqrt(t)
+    except (ValueError, ZeroDivisionError):
+        return None
+    if side == "CE":
+        return _norm_cdf(d2)
+    if side == "PE":
+        return _norm_cdf(-d2)
+    return None
+
+
+def _leg_quality(leg: dict) -> "tuple[bool, str | None]":
+    """Rule 4's per-leg quality bar. A leg with no bid/ask data (thin names
+    often lack depth) is NOT auto-rejected on the spread check -- there is
+    nothing to check -- but the OI floor always applies."""
+    oi = leg.get("oi", 0) or 0
+    if oi < MIN_LEG_OI:
+        return False, f"OI {oi:,.0f} below the {MIN_LEG_OI:,.0f} minimum"
+    bid, ask, premium = leg.get("bid", 0), leg.get("ask", 0), leg.get("premium", 0)
+    if bid and ask and premium:
+        spread = ask - bid
+        if spread > MAX_SPREAD_COST_FRACTION * premium:
+            return False, (f"bid-ask spread {spread:.2f} exceeds "
+                           f"{MAX_SPREAD_COST_FRACTION:.0%} of premium {premium:.2f}")
+    return True, None
+
+
+def _leg_row(frame, side, strike):
+    rows = frame[(frame["side"] == side) & (frame["strike"] == strike)]
+    return rows.iloc[0].to_dict() if len(rows) else None
+
+
+def _build_naked_long(frame, direction, atm_strike, step, spot, dte, lot_size,
+                       budget, rejected: list) -> "dict | None":
+    """The cheapest quality-passing, in-budget long CE/PE at or slightly
+    OTM from ATM (checked nearest-strike first)."""
+    for off in (0, 1, 2, 3):
+        strike = atm_strike + off * step if direction == "CE" else atm_strike - off * step
+        leg = _leg_row(frame, direction, strike)
+        if leg is None:
+            continue
+        cost = round(leg["premium"] * lot_size, 2)
+        if cost > budget:
+            rejected.append({"kind": "over_budget", "strategy": "long", "strike": strike,
+                             "detail": f"cost Rs {cost:,.0f} > budget Rs {budget:,.0f}"})
+            continue
+        ok, why = _leg_quality(leg)
+        if not ok:
+            rejected.append({"kind": "quality", "strategy": "long", "strike": strike, "detail": why})
+            continue
+        breakeven = round(strike + leg["premium"], 2) if direction == "CE" else round(strike - leg["premium"], 2)
+        prob = prob_finish_itm(spot, breakeven, leg["iv"], dte, direction)
+        return {
+            "legs": [{"action": "BUY", "side": direction, "strike": strike,
+                      "premium": leg["premium"]}],
+            "cost": cost, "max_loss": cost, "max_profit": None,  # unlimited/uncapped upside
+            "breakeven": breakeven, "probability": prob, "iv": leg["iv"],
+        }
+    return None
+
+
+def _build_debit_spread(frame, direction, atm_strike, step, spot, dte, lot_size,
+                         budget, rejected: list) -> "dict | None":
+    """Narrowest quality-passing, in-budget debit spread: buy at/near ATM,
+    sell further OTM in the same direction. Narrowest-first because it's
+    both the cheapest defined-risk structure available and the closest
+    analogue to the naked long it's meant to replace under rule 2."""
+    long_strike = atm_strike
+    long_leg = _leg_row(frame, direction, long_strike)
+    if long_leg is None:
+        return None
+    for width in SPREAD_WIDTH_STEPS:
+        short_strike = long_strike + width * step if direction == "CE" else long_strike - width * step
+        short_leg = _leg_row(frame, direction, short_strike)
+        if short_leg is None:
+            continue
+        net_debit = long_leg["premium"] - short_leg["premium"]
+        if net_debit <= 0:
+            continue  # not a real debit spread (inverted/zero-cost quotes -- skip, don't trust it)
+        cost = round(net_debit * lot_size, 2)
+        if cost > budget:
+            rejected.append({"kind": "over_budget", "strategy": "spread",
+                             "strike": f"{long_strike}/{short_strike}",
+                             "detail": f"cost Rs {cost:,.0f} > budget Rs {budget:,.0f}"})
+            continue
+        ok_long, why_long = _leg_quality(long_leg)
+        ok_short, why_short = _leg_quality(short_leg)
+        if not (ok_long and ok_short):
+            rejected.append({"kind": "quality", "strategy": "spread",
+                             "strike": f"{long_strike}/{short_strike}",
+                             "detail": why_long or why_short})
+            continue
+        width_pts = abs(short_strike - long_strike)
+        max_profit = round((width_pts - net_debit) * lot_size, 2)
+        if max_profit <= 0:
+            continue  # width too narrow to be worth the debit -- not a sane spread
+        breakeven = round(long_strike + net_debit, 2) if direction == "CE" else round(long_strike - net_debit, 2)
+        prob = prob_finish_itm(spot, breakeven, long_leg["iv"], dte, direction)
+        return {
+            "legs": [
+                {"action": "BUY", "side": direction, "strike": long_strike, "premium": long_leg["premium"]},
+                {"action": "SELL", "side": direction, "strike": short_strike, "premium": short_leg["premium"]},
+            ],
+            "cost": cost, "max_loss": cost, "max_profit": max_profit,
+            "breakeven": breakeven, "probability": prob, "iv": long_leg["iv"],
+        }
+    return None
+
+
+def _payoff_diagram(idea: dict, spot: float, lot_size: int) -> list:
+    """[{"price": underlying_price, "pnl": rupee_pnl_at_that_price}, ...]
+    across a range around spot -- rule 6's payoff diagram, as data rather
+    than an image (Phase 9's dashboard renders it)."""
+    lo = spot * (1 - PAYOFF_RANGE_PCT)
+    hi = spot * (1 + PAYOFF_RANGE_PCT)
+    prices = np.linspace(lo, hi, PAYOFF_POINTS)
+    points = []
+    for price in prices:
+        pnl = 0.0
+        for leg in idea["legs"]:
+            intrinsic = max(price - leg["strike"], 0) if leg["side"] == "CE" else max(leg["strike"] - price, 0)
+            leg_pnl = (intrinsic - leg["premium"]) * lot_size
+            pnl += leg_pnl if leg["action"] == "BUY" else -leg_pnl
+        points.append({"price": round(float(price), 2), "pnl": round(pnl, 2)})
+    return points
+
+
+def _plain_english_thesis(symbol, analysis, idea, strategy) -> str:
+    breakeven = idea["breakeven"]
+    dte = analysis["dte"]
+    expiry = analysis["expiry"]
+    max_loss = idea["max_loss"]
+    direction_word = "above" if idea["legs"][0]["side"] == "CE" else "below"
+    prob_str = f"~{idea['probability']:.0%}" if idea.get("probability") is not None else "n/a"
+    structure = {"debit_spread": "this defined-risk debit spread",
+                 "long": f"this long {idea['legs'][0]['side']}"}.get(strategy, "this trade")
+    return (
+        f"{symbol} needs to close {direction_word} {breakeven} by {expiry} "
+        f"({dte} trading day{'s' if dte != 1 else ''} away) for {structure} to profit. "
+        f"Modeled probability of finishing there: {prob_str} (market-implied from current IV, "
+        f"not a guarantee). Maximum possible loss if wrong: Rs {max_loss:,.0f} -- "
+        f"you can lose 100% of the amount paid for this position."
+    )
+
+
+def select_option_idea(symbol, raw, trend=None, budget: float = MAX_BUDGET_RS,
+                        cross_source_oi: bool = True) -> dict:
+    """One concrete, budget-capped strategy idea for `symbol`, or a clear
+    refusal with reasons -- PROJECT_BRIEF.md Section 5, rule 1: "no
+    qualifying option trade today" is a valid and expected output, and how
+    many candidates were rejected (and why) is always inspectable via the
+    returned `rejected` list, never silently dropped.
+    """
+    analysis = analyze_option_chain(symbol, raw, trend=trend, cross_source_oi=cross_source_oi)
+    if analysis.get("error"):
+        return {"symbol": symbol, "idea": None, "reason": analysis["error"],
+                "rejected": [], "analysis": analysis}
+
+    rejected: list = []
+    direction = analysis["direction"]
+    if direction == "NEUTRAL":
+        return {"symbol": symbol, "idea": None, "reason": "no directional edge",
+                "rejected": rejected, "analysis": analysis}
+
+    dte = analysis["dte"]
+    if dte < MIN_DTE_DAYS:
+        rejected.append({"kind": "near_expiry",
+                         "detail": f"{dte}d to expiry < {MIN_DTE_DAYS}d minimum"})
+        return {"symbol": symbol, "idea": None, "reason": "near-expiry blocked",
+                "rejected": rejected, "analysis": analysis}
+
+    lot_size = analysis["lot_size"]
+    if not lot_size:
+        rejected.append({"kind": "no_lot_size", "detail": "lot size unavailable"})
+        return {"symbol": symbol, "idea": None, "reason": "lot size unavailable",
+                "rejected": rejected, "analysis": analysis}
+
+    frame, step, spot = analysis["_frame"], analysis["_step"], analysis["spot"]
+    atm_strike = analysis["atm_strike"]
+
+    # Rule 2: a defined-risk debit spread is tried FIRST and wins whenever
+    # it qualifies; a naked long is only used when no spread does.
+    spread = _build_debit_spread(frame, direction, atm_strike, step, spot, dte,
+                                  lot_size, budget, rejected)
+    if spread is not None:
+        idea, strategy = spread, "debit_spread"
+    else:
+        naked = _build_naked_long(frame, direction, atm_strike, step, spot, dte,
+                                   lot_size, budget, rejected)
+        if naked is None:
+            return {"symbol": symbol, "idea": None, "reason": "no qualifying option trade today",
+                    "rejected": rejected, "analysis": analysis}
+        idea, strategy = naked, "long"
+
+    idea["strategy"] = strategy
+    idea["dte"] = dte
+    idea["expiry"] = analysis["expiry"]
+    idea["lot_size"] = lot_size
+    idea["payoff"] = _payoff_diagram(idea, spot, lot_size)
+    idea["thesis"] = _plain_english_thesis(symbol, analysis, idea, strategy)
+    return {"symbol": symbol, "idea": idea, "reason": None,
+            "rejected": rejected, "analysis": analysis}
+
+
+def rank_ideas(ideas: list) -> list:
+    """Sort select_option_idea() results by modeled probability, descending
+    -- rule 3: "never sort the options list by ascending premium". Three
+    tiers, worst last: a real probability (0% is still a real, ranked
+    number) > a qualifying idea whose probability couldn't be modeled >
+    no qualifying idea at all.
+    """
+    def _key(result):
+        idea = result.get("idea")
+        if idea is None:
+            return -2.0
+        prob = idea.get("probability")
+        return prob if prob is not None else -1.0
+    return sorted(ideas, key=_key, reverse=True)
