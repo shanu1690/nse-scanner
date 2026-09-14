@@ -1,0 +1,15 @@
+{
+  "_comment": "Populate from the official NSE trading holiday circular for 2026, then set verified to true. The calendar module refuses to run against an unverified list, on purpose: a wrong holiday shifts returns onto the wrong day and corrupts backtests invisibly.",
+  "year": 2026,
+  "verified": false,
+  "source": "https://www.nseindia.com/resources/exchange-communication-holidays",
+  "trading_holidays": [],
+  "special_sessions": [
+    {
+      "date": "2026-11-08",
+      "name": "EXAMPLE - Muhurat trading (replace with the actual date from the circular)",
+      "open": "18:00",
+      "close": "19:00"
+    }
+  ]
+}

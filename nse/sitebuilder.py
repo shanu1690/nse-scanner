@@ -10,8 +10,28 @@ import json
 import os
 import sys
 import time
+from datetime import datetime, timezone
+
+import pandas as pd
 
 from . import momentum as mom
+from .quality.validators import DataValidator, scan_bundle_for_credentials
+
+# Nightly is a fresh-checkout CI job with a 45-min job timeout (build + npm +
+# deploy) -- there's no live feed yet (that's Phase 3) to hold to a minutes-
+# level staleness bar. What this threshold actually catches today is a build
+# that has been silently stuck/retrying for an implausibly long time.
+MAX_BUILD_STALENESS_MINUTES = 30
+
+
+class PublishBlocked(RuntimeError):
+    """Raised when DataValidator or the credential scan vetoes a publish.
+
+    The contract (nse/quality/validators.py): a FAIL blocks publishing and
+    the previous bundle stays live. In this repo's script-based, CI-driven
+    pipeline "stays live" means the CI step fails before the later upload/
+    deploy steps run, rather than some background service catching a False.
+    """
 
 
 def _out(path):
@@ -20,8 +40,22 @@ def _out(path):
 
 
 def _dump(path, obj):
+    """Write one JSON file -- but never one carrying a credential-shaped key.
+
+    This is the single choke point every file in the bundle passes through,
+    so wiring the credential scan here (rather than at one hand-picked call
+    site) covers prices/*.json and chains/*.json too, now and for any call
+    site added later.
+    """
+    payload = json.dumps(obj, indent=1, allow_nan=False)
+    leaked = scan_bundle_for_credentials(payload)
+    if leaked:
+        raise PublishBlocked(
+            f"credential-shaped key(s) {leaked} found in {path} -- refusing "
+            f"to write it or anything published alongside it"
+        )
     with open(_out(path), "w") as fh:
-        json.dump(obj, fh, indent=1, allow_nan=False)
+        fh.write(payload)
     return path
 
 
@@ -67,6 +101,14 @@ def _chain_rows(raw):
 
 
 def _delivery_data(sc, prices, bench, fade, top_n):
+    """Returns (publishable delivery payload, every symbol that got scored).
+
+    The second value is deliberately the full scanned population, not the
+    top_n/min_score-filtered picks list -- a strategy correctly filtering
+    140 of 150 names below threshold on a quiet day is not a data-quality
+    problem, and validating coverage against the picks list would treat it
+    as one on every single run.
+    """
     ranked, results = mom.scan_universe(
         prices, bench, min_score=sc.MOM_CFG["min_score"],
         top_n=top_n, fade=fade)
@@ -83,7 +125,46 @@ def _delivery_data(sc, prices, bench, fade, top_n):
             "target2": round(r["target2"], 2),
             "reasons": r.get("reasons", []),
         })
-    return {"style": "fade" if fade else "momentum", "picks": picks}
+    return {"style": "fade" if fade else "momentum", "picks": picks}, results
+
+
+def _validation_frame(scored_results, prices, fetched_at):
+    """The scored-universe frame DataValidator checks before anything publishes.
+
+    analyze_stock()/analyze_fade() don't carry raw volume/high/low (only a
+    volume z-score), so those come from each symbol's own OHLCV frame's last
+    bar -- the same bar the score was computed from.
+    """
+    rows = []
+    for r in scored_results:
+        px = prices.get(r["symbol"])
+        if px is None or not len(px):
+            continue
+        last = px.iloc[-1]
+        rows.append({
+            "symbol": r["symbol"],
+            "close": float(last["Close"]),
+            "high": float(last["High"]),
+            "low": float(last["Low"]),
+            "volume": float(last.get("Volume", 0) or 0),
+            "score": r["score"],
+            "fetched_at": fetched_at,
+        })
+    return pd.DataFrame(rows)
+
+
+def _previous_scored_rows(data_dir):
+    """scored_rows from the last successful build's manifest, if any.
+
+    In CI (fresh checkout every run) this is always None -- the continuity
+    check only has teeth across successive local/persistent-disk runs until
+    the bundle itself is served from somewhere that persists between them.
+    """
+    try:
+        with open(os.path.join(data_dir, "manifest.json")) as fh:
+            return json.load(fh).get("scored_rows")
+    except (OSError, ValueError):
+        return None
 
 
 def _options_data(sc, prices, top_n, max_seconds, chains_out):
@@ -118,6 +199,7 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
     from . import tracker
 
     t0 = time.time()
+    t0_dt = datetime.now(timezone.utc)
     data_dir = os.path.join(out_dir, "data")
 
     # 1. prices --------------------------------------------------------------
@@ -141,7 +223,24 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
     fade = sc.MOM_CFG.get("style", "momentum") == "fade"
 
     # 2. delivery picks -------------------------------------------------------
-    delivery = _delivery_data(sc, prices, bench, fade, top_n)
+    delivery, scored_results = _delivery_data(sc, prices, bench, fade, top_n)
+
+    # 2b. data-integrity gate -- veto power over publishing --------------------
+    # Run this before anything is written (including the options chain fetch
+    # below, which is a live network call per symbol -- no point paying for
+    # it if the run isn't going to publish) and before *any* _dump() call, so
+    # a FAIL leaves every existing file in <out_dir>/data untouched.
+    validation_frame = _validation_frame(scored_results, prices, t0_dt)
+    report = DataValidator(max_staleness_minutes=MAX_BUILD_STALENESS_MINUTES).validate(
+        validation_frame, universe=sc.SYMBOLS, as_of=datetime.now(timezone.utc),
+        previous_row_count=_previous_scored_rows(data_dir),
+    )
+    print(report.render(), file=sys.stderr)
+    if not report.may_publish:
+        raise PublishBlocked(
+            f"data validation failed -- leaving the existing bundle at "
+            f"{data_dir} untouched (see the report above)"
+        )
 
     # 3. option picks + raw chains --------------------------------------------
     chains_out = {}
@@ -206,6 +305,12 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
             "scorecard_rows": (len(scorecard["del_rows"])
                                + len(scorecard["opt_rows"])),
             "build_seconds": round(time.time() - t0, 1),
+            # For _previous_scored_rows() on the *next* run's continuity
+            # check, and as a direct readout of the brief's COVERAGE metric.
+            "scored_rows": len(validation_frame),
+            "coverage_pct": next(
+                (c.detail.get("coverage") for c in report.checks
+                 if c.name == "coverage"), None),
         }),
     ]
     if not quiet:

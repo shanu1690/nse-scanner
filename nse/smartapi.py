@@ -37,6 +37,9 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 
+from nse.quality.corporate_actions import detect_unadjusted
+from nse.quality.events import log_event
+
 try:
     from SmartApi.smartConnect import SmartConnect
 except ImportError:  # pragma: no cover - not installed
@@ -523,7 +526,33 @@ class SmartAPISession:
         for col in ("Open", "High", "Low", "Close", "Volume"):
             df[col] = pd.to_numeric(df[col], errors="coerce")
         df = df.dropna(subset=["Date"]).set_index("Date").sort_index()
-        return df[~df.index.duplicated(keep="last")]
+        df = df[~df.index.duplicated(keep="last")]
+
+        # getCandleData returns raw exchange prints: no split/bonus/dividend
+        # adjustment, unlike the yfinance fallback (auto_adjust=True). We have
+        # no corporate-actions feed yet (that's Phase 4) to adjust this series
+        # properly, so we can't correct it here -- but we can refuse to trust
+        # it. A split/bonus shows up as a single-bar move landing on a clean
+        # fraction (0.5, 1/3, 0.25, 0.2...); that's exactly what
+        # detect_unadjusted's suspicious_ratio flags. Restrict to that flag
+        # (not every >20% move) so a genuine large news-driven day doesn't
+        # needlessly punt a whole symbol to the fallback. Raising
+        # SmartAPIUnavailable here is not a new contract: every other failure
+        # path in this class already does it so callers fall back to
+        # yfinance, which will return a correctly split/dividend-adjusted
+        # series for the same symbol -- a correct series beats a fast wrong
+        # one.
+        flagged = detect_unadjusted(df.rename(columns=str.lower))
+        suspicious = flagged[flagged["suspicious_ratio"]] if len(flagged) else flagged
+        if len(suspicious):
+            detail = suspicious[["gap", "ratio"]].round(3).to_dict("records")
+            message = (
+                f"{len(suspicious)} unadjusted-looking price jump(s) in "
+                f"SmartAPI candles (likely an un-adjusted split/bonus): {detail}"
+            )
+            log_event(symbol, "unadjusted_split_rejected", message)
+            raise SmartAPIUnavailable(f"{symbol}: {message}")
+        return df
 
 
 def get_shared_session():
