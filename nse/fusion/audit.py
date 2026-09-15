@@ -257,7 +257,7 @@ def run_fusion_audit(months=None, quiet: bool = False, fundamentals_db: "str | N
         "reliability": reliability, "monotonic": monotonic,
         "point_lift": point_lift, "lift_ci": lift_ci,
         "fundamental_coverage": fundamental_coverage, "demo_picks": demo_picks,
-        "coverage": coverage,
+        "coverage": coverage, "has_fundamentals": store is not None,
     }
 
 

@@ -3,6 +3,7 @@
 Usage:
   nse-scan scan --mode all|momentum|options [--refresh] [--top N] [--fade|--no-fade]
   nse-scan backtest [--period 6m] [--min-score 60] [--fade|--no-fade] [--export path.json]
+                    [--include-fusion [--fusion-period N] [--fundamentals-db path]]
   nse-scan factors [--period 3] [--min-score 55]
   nse-scan fusion [--period N] [--fundamentals-db path]
   nse-scan regime [--period N]
@@ -184,9 +185,15 @@ def cmd_backtest(args):
     fade = args.fade if args.fade is not None else MOM_CFG.get("style", "momentum") == "fade"
     if args.export:
         from nse.reporting import export_backtest_snapshot
-        snapshot = export_backtest_snapshot(args.export, months=args.period,
-                                            min_score=args.min_score, fade=fade)
+        snapshot = export_backtest_snapshot(
+            args.export, months=args.period, min_score=args.min_score, fade=fade,
+            include_fusion=args.include_fusion, fusion_months=args.fusion_period,
+            fundamentals_db=args.fundamentals_db)
         status = "ok" if snapshot["ok"] else f"refused: {snapshot['message']}"
+        if snapshot.get("ok") and args.include_fusion:
+            fusion = snapshot.get("fusion") or {}
+            fstatus = "ok" if fusion.get("ok") else f"refused: {fusion.get('message')}"
+            status += f", fusion/reliability {fstatus}"
         print(f"Exported backtest snapshot to {args.export} ({status})")
         return
     run_backtest(min_score=args.min_score, months=args.period, fade=fade)
@@ -497,6 +504,17 @@ def main():
     p_bt.add_argument("--export", default=None,
                       help="write a structured JSON snapshot for the dashboard's Backtest "
                            "tab to this path instead of printing (e.g. site/data/backtest.json)")
+    p_bt.add_argument("--include-fusion", action="store_true",
+                      help="also run the Phase 6 fusion audit and embed its reliability "
+                           "curve/Brier score in the export (--export only; a second "
+                           "15-20+ min walk-forward run, off by default -- see "
+                           "nse/reporting.py's module docstring)")
+    p_bt.add_argument("--fusion-period", type=int, default=None,
+                      help="months of history for the fusion audit when --include-fusion "
+                           "is set (default: all available, same as `nse-scan fusion`)")
+    p_bt.add_argument("--fundamentals-db", default=None,
+                      help="fundamentals PointInTimeStore path for the fusion audit "
+                           "(default: data/pit.db)")
     p_bt.set_defaults(func=cmd_backtest)
 
     p_f = sub.add_parser("factors", help="which sub-signals actually predict moves")

@@ -38,6 +38,11 @@ nse-scan verify-bundle site
 nse-scan backtest --period 12
 nse-scan backtest --period 12 --export site/data/backtest.json
 
+# Same export, also embedding the Phase 6 fusion model's reliability curve/
+# Brier score (a second, independent 15-20+ min walk-forward run -- off by
+# default, opt in with --include-fusion; see nse/reporting.py)
+nse-scan backtest --period 12 --export site/data/backtest.json --include-fusion
+
 # Which sub-signals actually predict moves, out-of-sample
 nse-scan factors --period 10
 
@@ -130,10 +135,14 @@ rebuilding beyond that.
   cherry-picked number. See `PROJECT_BRIEF.md` Section 2's target table for
   what a "good" result would actually look like — this system isn't
   claiming to be there.
-- **Backtest tab has no reliability curve yet.** That lives in Phase 6's
-  fusion module output, which isn't wired into `nse/reporting.py`'s export
-  — a separate, larger serialization effort against a different,
-  compute-heavy pipeline.
+- **Backtest tab's reliability curve is opt-in, not automatic.** Phase 6's
+  fusion audit (Brier score, reliability curve, lift vs the technical-score
+  baseline) is wired into `nse/reporting.py`'s export, but only runs when
+  you pass `--include-fusion` to `nse-scan backtest --export` -- it's a
+  second, independent 15-20+ min walk-forward fit on top of the backtest's
+  own, and bundling it in by default would double every export's runtime.
+  Without that flag the Backtest tab simply omits the fusion section,
+  same as it omits everything else that hasn't been exported yet.
 - **`react-router-dom` carries two known moderate CVEs** (open redirect,
   SSR deserialization) with no non-breaking fix in the v6 line used here.
   Judged low-risk for this client-only SPA (no SSR, no untrusted redirect

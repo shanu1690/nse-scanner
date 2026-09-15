@@ -13,6 +13,17 @@ public(-ish) helper functions (_lift_stat, bootstrap_ci, _trade_stats,
 label_shuffle_control, ...) backtest.py's own reporting functions call, so
 the numbers here are exactly the ones a `nse-scan backtest` run would print,
 just structured instead of formatted.
+
+The fusion/calibration block (Phase 6's reliability curve + Brier score) is
+a further-OPT-IN addition on top of that: `run_fusion_audit()` fits its own
+model and is a second 15-20+ minute walk-forward run, independent of (and
+roughly as expensive as) the backtest above. Bundling it in unconditionally
+would double every export's runtime for a tab section most refreshes don't
+need, so it only runs when the caller passes `include_fusion=True` (CLI:
+`nse-scan backtest --export PATH --include-fusion`). Left out (the
+snapshot's default), the Backtest tab just doesn't render the reliability
+section -- same "say plainly that nothing's been generated yet" philosophy
+as the top-level "no snapshot at all" case.
 """
 
 from __future__ import annotations
@@ -141,8 +152,55 @@ def _label_shuffle_block(signals, min_score) -> Optional[dict]:
     return {"real_lift": real, "shuffled_lift": shuffled, "verdict": verdict}
 
 
+def _fusion_block(months: "int | None", fundamentals_db: "str | None" = None) -> dict:
+    """JSON-safe reliability-curve/Brier snapshot from the Phase 6 fusion
+    audit. Refusal (not enough rows/blocks) is reported the same honest way
+    run_fusion_audit() itself reports it -- `ok: False` + the message the
+    CLI would have printed -- not swallowed into a missing key."""
+    from . import fusion as fu
+
+    result = fu.run_fusion_audit(months=months, quiet=True, fundamentals_db=fundamentals_db)
+    if not result["ok"]:
+        return {"ok": False, "message": result["message"]}
+
+    demo_picks = []
+    for pick in result["demo_picks"]:
+        d = pick["date"]
+        demo_picks.append({
+            "symbol": pick["symbol"],
+            "date": d.date().isoformat() if hasattr(d, "date") else str(d),
+            "probability": _safe_float(pick["probability"]),
+            "reasons": pick["reasons"],
+        })
+
+    coverage = result["coverage"]
+    return {
+        "ok": True,
+        "n_train": result["n_train"], "n_calib": result["n_calib"],
+        "n_held_out": result["n_held_out"],
+        "calib_method": result["calib_method"],
+        "brier_calibrated": _safe_float(result["brier_calibrated"]),
+        "brier_uncalibrated": _safe_float(result["brier_uncalibrated"]),
+        "brier_floor": _safe_float(result["brier_floor"]),
+        "beats_floor": result["beats_floor"],
+        "reliability": result["reliability"],
+        "monotonic": result["monotonic"],
+        "point_lift": _safe_float(result["point_lift"]),
+        "lift_ci": list(result["lift_ci"]) if result["lift_ci"] else None,
+        "fundamental_coverage": {k: _safe_float(v) for k, v in result["fundamental_coverage"].items()},
+        "has_fundamentals": result["has_fundamentals"],
+        "demo_picks": demo_picks,
+        "coverage": {
+            "scored": len(coverage.scored), "universe": len(coverage.universe),
+            "ratio": coverage.coverage_ratio,
+        },
+    }
+
+
 def build_backtest_snapshot(months: "int | None" = 6, min_score: float = 60.0,
-                             fade: "bool | None" = None) -> dict:
+                             fade: "bool | None" = None, include_fusion: bool = False,
+                             fusion_months: "int | None" = None,
+                             fundamentals_db: "str | None" = None) -> dict:
     """The full structured payload for backtest.json. `fade=None` reads the
     configured style from config.yaml, matching run_backtest()'s own CLI
     default."""
@@ -192,12 +250,17 @@ def build_backtest_snapshot(months: "int | None" = 6, min_score: float = 60.0,
             "trades": _trade_block(rolling, min_score),
         },
         "factor_analysis": factors,
+        "fusion": _fusion_block(fusion_months, fundamentals_db) if include_fusion else None,
     }
 
 
 def export_backtest_snapshot(path: str, months: "int | None" = 6, min_score: float = 60.0,
-                              fade: "bool | None" = None) -> dict:
-    snapshot = build_backtest_snapshot(months=months, min_score=min_score, fade=fade)
+                              fade: "bool | None" = None, include_fusion: bool = False,
+                              fusion_months: "int | None" = None,
+                              fundamentals_db: "str | None" = None) -> dict:
+    snapshot = build_backtest_snapshot(months=months, min_score=min_score, fade=fade,
+                                        include_fusion=include_fusion, fusion_months=fusion_months,
+                                        fundamentals_db=fundamentals_db)
     with open(path, "w") as fh:
         json.dump(snapshot, fh, indent=2)
     return snapshot

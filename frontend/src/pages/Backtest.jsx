@@ -1,4 +1,5 @@
 import { useData, fmt, fmtPct } from '../api.js'
+import ReliabilityChart from '../components/ReliabilityChart.jsx'
 
 function HitRateBlock({ block, title }) {
   if (!block) return <div className="loading">Not enough signals to report {title.toLowerCase()}.</div>
@@ -68,6 +69,49 @@ function Robustness({ r }) {
   )
 }
 
+function FusionCalibration({ fusion }) {
+  if (!fusion) return null
+  if (!fusion.ok) {
+    return (
+      <div className="card">
+        <h2>Fusion model calibration (Phase 6)</h2>
+        <div className="loading">{fusion.message}</div>
+      </div>
+    )
+  }
+  return (
+    <div className="card">
+      <div className="card-head">
+        <h2>Fusion model calibration (Phase 6)</h2>
+        <span className="pill">{fusion.calib_method} · train={fusion.n_train} calib={fusion.n_calib} held-out={fusion.n_held_out}</span>
+      </div>
+      <div className="grid2">
+        <div>
+          <div className="idea-fact"><span className="k">Brier (calibrated)</span><span className="v">{fmt(fusion.brier_calibrated, 4)}</span></div>
+          <div className="idea-fact"><span className="k">Brier (uncalibrated)</span><span className="v">{fmt(fusion.brier_uncalibrated, 4)}</span></div>
+          <div className="idea-fact"><span className="k">Base-rate floor</span><span className="v">{fmt(fusion.brier_floor, 4)}</span></div>
+          <div className="idea-fact"><span className="k">Beats floor</span>
+            <span className={`v ${fusion.beats_floor ? 'up' : 'down'}`}>{fusion.beats_floor ? 'YES' : 'NO'}</span></div>
+          <div className="idea-fact"><span className="k">Monotonic</span>
+            <span className="v">{fusion.monotonic ? 'YES (within 3pp tolerance)' : 'NO'}</span></div>
+          {fusion.point_lift !== null && fusion.point_lift !== undefined && (
+            <div className="idea-fact"><span className="k">Lift vs technical score</span>
+              <span className={`v ${fusion.point_lift >= 0 ? 'up' : 'down'}`}>
+                {fusion.point_lift >= 0 ? '+' : ''}{fmtPct(fusion.point_lift)}
+                {fusion.lift_ci ? ` [${fmtPct(fusion.lift_ci[0])}, ${fmtPct(fusion.lift_ci[1])}]` : ''}
+              </span>
+            </div>
+          )}
+          <div className="legend" style={{ marginTop: 8 }}>
+            {fusion.has_fundamentals ? 'Technical + regime + fundamental features.' : 'Technical + regime features only (no fundamentals store found).'}
+          </div>
+        </div>
+        <ReliabilityChart curve={fusion.reliability} />
+      </div>
+    </div>
+  )
+}
+
 export default function Backtest() {
   const { data, loading, error } = useData('backtest.json')
 
@@ -132,6 +176,8 @@ export default function Backtest() {
           </div>
         )}
       </div>
+
+      <FusionCalibration fusion={data.fusion} />
 
       {data.factor_analysis && (
         <div className="card">
