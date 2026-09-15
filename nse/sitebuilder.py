@@ -16,6 +16,7 @@ import pandas as pd
 
 from . import momentum as mom
 from .quality.validators import DataValidator, scan_bundle_for_credentials
+from .risk import RiskGateResult, RiskLimits, RiskVeto, enforce_delivery_picks
 
 # Nightly is a fresh-checkout CI job with a 45-min job timeout (build + npm +
 # deploy) -- there's no live feed yet (that's Phase 3) to hold to a minutes-
@@ -167,14 +168,30 @@ def _previous_scored_rows(data_dir):
         return None
 
 
-def _options_data(sc, prices, top_n, max_seconds, chains_out):
+def _options_data(sc, prices, top_n, max_seconds, chains_out, risk_limits):
     results = sc.scan_options(prices, top_n=top_n, max_seconds=max_seconds,
                               chains_out=chains_out)
     picks = []
+    budget_vetoes = []
     for r in results:
         if r.get("error") or not r.get("picks"):
             continue
         pick = r["picks"][0]
+        lot_size = r.get("lot_size")
+        # Independent re-derivation of cost (premium * lot_size), not a
+        # trust of r["amount_per_lot"] -- Phase 8's "defence in depth"
+        # requirement (risk-manager.md: "verified independently of
+        # options-strategist"). This is also the FIRST budget enforcement
+        # this particular dashboard pipeline has ever had: the naive
+        # nearest-strike pick above was never checked against the Rs
+        # 10,000 cap before Phase 8.
+        cost = round(pick["premium"] * lot_size, 2) if lot_size else None
+        if cost is None or cost > risk_limits.options_budget_cap:
+            budget_vetoes.append(RiskVeto(
+                r["symbol"], "options_budget_cap", cost, risk_limits.options_budget_cap,
+                f"cost {'unknown (no lot size)' if cost is None else f'Rs {cost:,.0f}'} "
+                f"{'—' if cost is None else '>'} Rs {risk_limits.options_budget_cap:,.0f} cap"))
+            continue
         chain = {k: r[k] for k in (
             "pcr", "atm_iv", "ivr", "max_pain", "dte", "expected_move_pct",
             "straddle_prem", "total_oi", "d_oi_total", "reasons") if k in r}
@@ -184,10 +201,12 @@ def _options_data(sc, prices, top_n, max_seconds, chains_out):
             "spot": r["spot"], "expiry": r["expiry"],
             "strike": pick["strike"], "premium": pick["premium"],
             "breakeven": pick["breakeven"],
-            "lot_size": r.get("lot_size"),
-            "amount_per_lot": r.get("amount_per_lot"),
+            "lot_size": lot_size,
+            "amount_per_lot": cost,
             "chain": chain,
         })
+    if budget_vetoes:
+        print(RiskGateResult(approved=[], vetoes=budget_vetoes).render(), file=sys.stderr)
     return picks
 
 
@@ -242,9 +261,26 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
             f"{data_dir} untouched (see the report above)"
         )
 
+    # 2c. risk gate -- per-pick veto power, not an all-or-nothing block --------
+    # Unlike DataValidator above (a data-integrity problem means don't trust
+    # ANYTHING), a risk-limit breach is about ONE pick, not the whole bundle:
+    # risk-manager.md has "veto power over any pick that breaches limits",
+    # not over the publish itself. Picks that fail here are dropped from
+    # delivery["picks"] (never silently -- see the rendered report) while
+    # everything else still publishes. No verified sector classification
+    # data source exists for this universe (checked live against NSE's
+    # sectoral-index endpoint; see nse/risk/__init__.py), so sector_map is
+    # omitted -- the sector cap simply doesn't run rather than guessing, and
+    # every symbol shows up in the risk report's sector_unknown list.
+    risk_limits = RiskLimits.from_config(sc.CONFIG)
+    picks_by_score = sorted(delivery["picks"], key=lambda p: p["score"], reverse=True)
+    risk_result = enforce_delivery_picks(picks_by_score, risk_limits, price_frames=prices)
+    print(risk_result.render(), file=sys.stderr)
+    delivery["picks"] = risk_result.approved
+
     # 3. option picks + raw chains --------------------------------------------
     chains_out = {}
-    options = _options_data(sc, prices, top_n, max_seconds, chains_out)
+    options = _options_data(sc, prices, top_n, max_seconds, chains_out, risk_limits)
 
     # 4. scorecard ------------------------------------------------------------
     scorecard = tracker.scorecard_data(sc.DATA_CFG["lookback_days"]) or {
@@ -311,6 +347,11 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
             "coverage_pct": next(
                 (c.detail.get("coverage") for c in report.checks
                  if c.name == "coverage"), None),
+            "risk_gate": {
+                "delivery_approved": len(risk_result.approved),
+                "delivery_vetoed": len(risk_result.vetoes),
+                "sector_cap_unverified_symbols": len(risk_result.sector_unknown),
+            },
         }),
     ]
     if not quiet:

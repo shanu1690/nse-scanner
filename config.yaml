@@ -247,3 +247,23 @@ data:
   # `smartapi:` block in secrets.yaml) or "nse" (yfinance prices + NSE public
   # API). Falls back to nse automatically when SmartAPI is unavailable.
   provider: "smartapi"
+
+# Phase 8 risk gate (nse/risk/) -- mechanical position-sizing and portfolio
+# limits enforced on every publish; see nse/sitebuilder.py's build() and
+# .claude/agents/risk-manager.md. All optional -- nse/risk/limits.py's
+# defaults apply to anything omitted here. These starting values are
+# deliberately conservative round numbers, not fit to any backtest.
+risk:
+  capital: 100000.0             # Rs -- update to your actual account size
+  per_trade_risk_pct: 1.0       # % of capital risked per delivery pick (stop-out loss)
+  max_sector_pct: 30.0          # % of capital's risk budget in one sector
+  # No verified NSE sector-classification data source exists yet (checked
+  # live against NSE's sectoral-index endpoint -- see nse/risk/__init__.py's
+  # docstring); this cap currently has nothing to enforce against and every
+  # symbol shows up as "sector unknown" in the risk report until a real
+  # sector_map is supplied.
+  max_correlation: 0.70         # pairwise daily-return correlation cap across open picks
+  max_portfolio_heat_pct: 6.0   # total risk %, all open delivery ideas combined
+  max_open_ideas: 10            # delivery + options combined
+  options_budget_cap: 10000.0   # Rs -- PROJECT_BRIEF.md Section 5's hard cap
+  correlation_lookback_days: 60
