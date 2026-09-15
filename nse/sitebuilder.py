@@ -60,17 +60,27 @@ def _dump(path, obj):
     return path
 
 
-def _price_series(sym, df):
-    """Compact OHLCV rows for the frontend chart (recent 250 bars)."""
+def _rnd(v, digits=2):
+    return round(float(v), digits) if v is not None and not pd.isna(v) else None
+
+
+def _price_series(sym, full):
+    """Compact OHLCV + overlay-indicator rows for the frontend candlestick
+    chart (recent 250 bars). `full` is the INDICATOR-ENRICHED frame
+    (ind.add_all_indicators' output), not the raw OHLCV df -- EMA/Donchian
+    need to be plotted for every bar on the chart, not just read off the
+    last one. Appends new fields after the original [date, o, h, l, c, v]
+    shape rather than reordering it, so PriceChart.jsx's existing
+    series[i][4]-style indexing keeps working unchanged.
+    """
     rows = []
-    for idx, r in df.tail(250).iterrows():
+    for idx, r in full.tail(250).iterrows():
         rows.append([
             idx.date().isoformat(),
-            round(float(r["Open"]), 2),
-            round(float(r["High"]), 2),
-            round(float(r["Low"]), 2),
-            round(float(r["Close"]), 2),
+            _rnd(r["Open"]), _rnd(r["High"]), _rnd(r["Low"]), _rnd(r["Close"]),
             int(r.get("Volume", 0) or 0),
+            _rnd(r.get("EMA21")), _rnd(r.get("EMA50")), _rnd(r.get("EMA200")),
+            _rnd(r.get("DC_HIGH20")), _rnd(r.get("DC_LOW20")),
         ])
     return rows
 
@@ -296,6 +306,7 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
         "del_headers": [], "del_rows": [], "opt_headers": [], "opt_rows": []}
 
     # 5. price series for charted symbols -------------------------------------
+    delivery_levels = {p["symbol"]: p for p in delivery["picks"]}
     charted = sorted({p["symbol"] for p in delivery["picks"]}
                      | {p["symbol"] for p in options})
     price_files = []
@@ -303,16 +314,17 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
         df = prices.get(sym)
         if df is None or not len(df):
             continue
-        idx, row = ind.last_snapshot(ind.add_all_indicators(df))
-        ema = []
-        for i in range(max(0, len(df) - 250), len(df)):
-            ema.append([
-                df.index[i].date().isoformat(),
-                round(float(df["Close"].iloc[i]), 2),
-            ])
+        full = ind.add_all_indicators(df)
+        idx, row = ind.last_snapshot(full)
+        lvl = delivery_levels.get(sym)
         price_files.append(_dump(
             os.path.join(data_dir, "prices", f"{sym}.json"),
-            {"symbol": sym, "series": _price_series(sym, df),
+            {"symbol": sym, "series": _price_series(sym, full),
+             # Entry/stop/target horizontal lines -- Section 9's chart spec
+             # -- only present for symbols that are an actual delivery pick.
+             "levels": ({"entry": lvl["entry"], "stop": lvl["stop"],
+                        "target1": lvl["target1"], "target2": lvl["target2"]}
+                       if lvl else None),
              "last": {
                  "date": idx.date().isoformat(),
                  "close": round(float(row["Close"]), 2),

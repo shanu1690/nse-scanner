@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom'
 import { useData, fmt } from '../api.js'
-import PriceChart from '../components/PriceChart.jsx'
+import CandleChart from '../components/CandleChart.jsx'
 
 export default function Symbol() {
   const { symbol } = useParams()
@@ -37,7 +37,7 @@ export default function Symbol() {
       <div className="card">
         <h2>Price &amp; indicators</h2>
         <div className="grid2">
-          <PriceChart series={p.series} />
+          <CandleChart series={p.series} levels={p.levels} />
           <div>
             <table>
               <tbody>

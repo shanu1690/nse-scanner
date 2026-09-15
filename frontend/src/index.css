@@ -10,6 +10,25 @@
   --up: #22c55e;
   --down: #ef4444;
   --accent: #5b8cff;
+  --focus: #7ea2ff;
+  color-scheme: dark;
+}
+
+/* Light theme: explicit opt-in via the toggle (persisted), default stays
+   dark -- this app's original design intent and still the more legible
+   choice for a dense trading-data table. */
+:root[data-theme="light"] {
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+  --panel-2: #eef1f8;
+  --border: #d8deec;
+  --text: #16213a;
+  --muted: #5c6884;
+  --up: #16a34a;
+  --down: #dc2626;
+  --accent: #3b5fe0;
+  --focus: #3b5fe0;
+  color-scheme: light;
 }
 
 body {
@@ -19,18 +38,41 @@ body {
   font: 14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.app { max-width: 1100px; margin: 0 auto; padding: 0 16px 40px; }
+*:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.app { max-width: 1200px; margin: 0 auto; padding: 0 16px 40px; }
 
 .topbar {
   display: flex; align-items: center; gap: 18px;
   padding: 14px 0; border-bottom: 1px solid var(--border);
   position: sticky; top: 0; background: var(--bg); z-index: 5;
+  flex-wrap: wrap;
 }
-.brand { font-weight: 700; font-size: 18px; color: var(--text); text-decoration: none; }
-.topbar nav { display: flex; gap: 14px; }
-.topbar nav a { color: var(--muted); text-decoration: none; padding: 4px 8px; border-radius: 6px; }
+.brand { font-weight: 700; font-size: 18px; color: var(--text); text-decoration: none; white-space: nowrap; }
+.topbar nav { display: flex; gap: 4px; overflow-x: auto; }
+.topbar nav a {
+  color: var(--muted); text-decoration: none; padding: 6px 10px; border-radius: 6px;
+  font-size: 13px; white-space: nowrap;
+}
 .topbar nav a.active, .topbar nav a:hover { color: var(--text); background: var(--panel-2); }
-.meta { margin-left: auto; color: var(--muted); font-size: 12px; }
+.meta { margin-left: auto; color: var(--muted); font-size: 12px; display: flex; align-items: center; gap: 10px; }
+
+.theme-toggle {
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 6px; padding: 5px 9px; cursor: pointer; font-size: 13px; line-height: 1;
+}
+.theme-toggle:hover { border-color: var(--accent); }
+
+.stale-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;
+}
+.stale-badge.fresh { background: rgba(34,197,94,.15); color: var(--up); }
+.stale-badge.stale { background: rgba(239,68,68,.15); color: var(--down); }
+.stale-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
 main { padding: 20px 0; }
 
@@ -39,6 +81,8 @@ main { padding: 20px 0; }
   border-radius: 10px; padding: 16px; margin-bottom: 20px;
 }
 .card h2 { margin: 0 0 12px; font-size: 15px; color: var(--muted); font-weight: 600; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.card-head h2 { margin: 0; }
 
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
@@ -56,6 +100,8 @@ a.sym:hover { text-decoration: underline; }
 .badge.pe { background: rgba(239,68,68,.15); color: var(--down); }
 .badge.flat { background: rgba(139,150,173,.15); color: var(--muted); }
 .badge.score { background: var(--panel-2); color: var(--accent); }
+.badge.spread { background: rgba(91,140,255,.15); color: var(--accent); }
+.badge.long { background: rgba(139,150,173,.15); color: var(--muted); }
 
 .up { color: var(--up); } .down { color: var(--down); }
 
@@ -68,6 +114,15 @@ a.sym:hover { text-decoration: underline; }
 .loading, .error { color: var(--muted); padding: 24px; text-align: center; }
 .error { color: var(--down); }
 
+.skeleton {
+  background: linear-gradient(90deg, var(--panel-2) 25%, var(--border) 37%, var(--panel-2) 63%);
+  background-size: 400% 100%;
+  animation: skeleton-shine 1.4s ease infinite;
+  border-radius: 6px;
+}
+@keyframes skeleton-shine { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+.skeleton-row { height: 32px; margin-bottom: 6px; }
+
 footer { color: var(--muted); font-size: 12px; text-align: center; margin-top: 30px; }
 
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -78,3 +133,79 @@ h1 { font-size: 20px; margin: 6px 0 16px; }
 h1 small { color: var(--muted); font-weight: 400; font-size: 13px; }
 
 .legend { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+/* ---------------------------------------------------------- filter toolbar */
+.toolbar {
+  display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+  margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+.toolbar input[type="text"], .toolbar input[type="search"], .toolbar select {
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 6px; padding: 6px 9px; font-size: 13px;
+}
+.toolbar input[type="text"]:focus, .toolbar select:focus { border-color: var(--accent); }
+.toolbar .search { min-width: 180px; flex: 1 1 180px; }
+.toolbar .range { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.toolbar .range input[type="number"] { width: 70px; }
+.toolbar button {
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 6px; padding: 6px 10px; font-size: 12px; cursor: pointer;
+}
+.toolbar button:hover { border-color: var(--accent); }
+.toolbar button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.toolbar .spacer { flex: 1 1 auto; }
+.toolbar .chip-toggle { display: flex; gap: 4px; }
+
+.col-menu { position: relative; }
+.col-menu-panel {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 10;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px; min-width: 160px; box-shadow: 0 8px 24px rgba(0,0,0,.25);
+}
+.col-menu-panel label { display: flex; align-items: center; gap: 6px; padding: 4px 2px; font-size: 12px; cursor: pointer; }
+
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable:hover { color: var(--text); }
+th .sort-arrow { margin-left: 4px; color: var(--accent); }
+th .sort-order { font-size: 9px; vertical-align: super; color: var(--accent); }
+
+.result-count { color: var(--muted); font-size: 12px; }
+
+/* ---------------------------------------------------------------- payoff */
+/* Expanded-row panels sit inside a <td>, which inherits the table's own
+   `white-space: nowrap` -- that squeezes the grid/flex layout below it
+   onto one line unless explicitly reset here. */
+td.panel-cell { white-space: normal; }
+.payoff-wrap { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .payoff-wrap { grid-template-columns: 1fr; } }
+.idea-fact { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.idea-fact:last-child { border-bottom: none; }
+.idea-fact .k { color: var(--muted); }
+.idea-fact .v { font-weight: 600; font-variant-numeric: tabular-nums; }
+.thesis { margin-top: 10px; padding: 10px 12px; background: var(--panel-2); border-radius: 8px; font-size: 13px; }
+.max-loss-warning { color: var(--down); font-weight: 600; }
+.no-idea-reason { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+/* -------------------------------------------------------------- chart tf */
+.tf-switcher { display: flex; gap: 4px; }
+.tf-switcher button {
+  background: transparent; border: 1px solid var(--border); color: var(--muted);
+  border-radius: 6px; padding: 3px 9px; font-size: 12px; cursor: pointer;
+}
+.tf-switcher button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ------------------------------------------------------------- reliability */
+.reliability-bar-track { background: var(--panel-2); border-radius: 4px; height: 8px; overflow: hidden; }
+.reliability-bar-fill { height: 100%; background: var(--accent); }
+.verdict-pass { color: var(--up); font-weight: 700; }
+.verdict-review { color: var(--down); font-weight: 700; }
+
+/* ------------------------------------------------------------------ mobile */
+@media (max-width: 640px) {
+  .app { padding: 0 10px 30px; }
+  .topbar { gap: 8px; }
+  .meta { width: 100%; order: 3; margin-left: 0; }
+  table { font-size: 12px; }
+  th, td { padding: 6px 6px; }
+  .card { padding: 12px; }
+}
