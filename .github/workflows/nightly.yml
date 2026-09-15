@@ -8,7 +8,14 @@ name: nightly
 #   SMARTAPI_CLIENT_ID     Angel One client/trading ID
 #   SMARTAPI_PIN           Angel One 4-digit trading PIN
 #   SMARTAPI_TOTP_SECRET   base32 TOTP secret from the Angel One app
+#   NTFY_TOPIC             optional -- ntfy.sh topic for a push notification
+#                          on failure, in addition to the GitHub issue this
+#                          workflow always files (see the "Alert on failure"
+#                          step). Unset is fine; that step just no-ops.
 # and the Pages source set to "GitHub Actions" (Settings -> Pages).
+#
+# Phase 10 hardening: RUNBOOK.md has the full "job failed, what do I do"
+# playbook this workflow's alerting points at.
 
 on:
   schedule:
@@ -20,6 +27,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  issues: write
 
 concurrency:
   group: pages
@@ -72,6 +80,14 @@ jobs:
         run: npm ci && npm run build
         working-directory: frontend
 
+      # Phase 10: an independent check of the ACTUAL FILES about to go
+      # live -- distinct from (and run after) the in-process DataValidator
+      # gate `nse-scan site` already applied to the pre-write DataFrame.
+      # Same "defence in depth" principle as the options-budget re-check
+      # and the per-file credential scan; see nse/quality/bundle_check.py.
+      - name: Verify bundle before deploy
+        run: nse-scan verify-bundle site
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -80,3 +96,64 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      # Runs only when an earlier step in this job failed (any of: the
+      # connectivity check, the scan itself, the frontend build, the bundle
+      # verification, or the deploy). Files (or comments on) one issue
+      # rather than a new one per failed night, so repeated failures don't
+      # spam the tracker -- RUNBOOK.md has the response playbook this issue
+      # links to.
+      - name: Alert on failure (GitHub issue)
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const label = 'nightly-failure';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: label,
+            });
+            if (existing.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body: `Failed again: ${runUrl}`,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title: 'Nightly scan/deploy failed',
+                labels: [label],
+                body: [
+                  `The nightly scan/deploy job failed.`,
+                  ``,
+                  `Run: ${runUrl}`,
+                  ``,
+                  `See RUNBOOK.md's "Nightly job failed" section for the response`,
+                  `playbook. This issue is reused across consecutive failures`,
+                  `(deduplicated by the "${label}" label) rather than filed fresh`,
+                  `every night -- close it once the underlying cause is fixed.`,
+                ].join('\n'),
+              });
+            }
+
+      # Best-effort second channel -- reuses the same send_ntfy() the daily
+      # report already uses (nse/report.py), so this needs no new secret
+      # beyond the optional NTFY_TOPIC documented at the top of this file.
+      # Silently no-ops (never fails the job) when that secret isn't set.
+      - name: Alert on failure (ntfy push, optional)
+        if: failure()
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          python -c "
+          import os
+          from nse.report import send_ntfy
+          topic = os.environ.get('NTFY_TOPIC', '')
+          if not topic:
+              print('NTFY_TOPIC not configured -- skipping push, GitHub issue is the record of this failure')
+          else:
+              run_url = f\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+              send_ntfy('nse-scanner nightly FAILED', f'See the run: {run_url}', {'topic': topic})
+          " || echo "ntfy push failed -- non-fatal, the GitHub issue above is the primary alert"

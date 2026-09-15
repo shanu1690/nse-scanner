@@ -10,6 +10,7 @@ Usage:
   nse-scan watch SYMBOL
   nse-scan universe            # list current universe
   nse-scan site                # emit JSON data for the web dashboard
+  nse-scan verify-bundle [path] # validate a built bundle before deploy
 """
 
 
@@ -319,6 +320,19 @@ def cmd_site(args):
     )
 
 
+def cmd_verify_bundle(args):
+    """Phase 10: post-write bundle validation, independent of the in-process
+    DataValidator gate `nse-scan site` already ran -- meant to run as its own
+    CI step right before a deploy. Exits non-zero on any FAIL so CI can gate
+    on it directly."""
+    from nse.quality.bundle_check import verify_bundle
+    data_dir = os.path.join(args.path, "data") if os.path.isdir(os.path.join(args.path, "data")) else args.path
+    report = verify_bundle(data_dir)
+    print(report.render())
+    if not report.may_publish:
+        sys.exit(1)
+
+
 def _today_delivery_picks(prices, bench, fade, top_n):
     from nse import tracker
     ranked, _ = mom.scan_universe(
@@ -509,6 +523,12 @@ def main():
     p_site.add_argument("--refresh", action="store_true",
                         help="force-refetch every symbol's price history")
     p_site.set_defaults(func=cmd_site)
+
+    p_vb = sub.add_parser("verify-bundle", help="Phase 10: validate a built site "
+                          "bundle before deploy (independent of the in-process gate)")
+    p_vb.add_argument("path", nargs="?", default="site",
+                      help="site output dir, or its data/ subdir directly (default: site)")
+    p_vb.set_defaults(func=cmd_verify_bundle)
 
     p_t = sub.add_parser("track", help="save today's picks + show their scorecard")
     p_t.add_argument("--status", action="store_true",
