@@ -290,6 +290,53 @@ def test_run_factor_analysis_end_to_end_clears_the_gate(synthetic_cache):
     assert set(result["oos_diffs"]) == set(bt.FACTORS)
 
 
+def test_collect_signals_skips_non_finite_close_and_scrubs_forward_returns(synthetic_cache, monkeypatch):
+    """Real bug, found live: a bogus non-trading-day row with NaN OHLC
+    (data/cache/CHOLAFIN.csv had one -- a Sunday, 2026-09-14) slipped into
+    the cache. Before this fix it (a) still produced a garbage-but-valid-
+    looking signal (every price comparison in momentum.py silently
+    evaluates False against NaN rather than raising) and (b) poisoned the
+    forward-return of any earlier signal whose horizon landed on that bar,
+    surfacing as a literal '+nan%' in run_factor_analysis()'s held-out
+    print line."""
+    import nse.data as data_mod
+
+    frame = data_mod.load_price_history("SYM0").copy()
+    poison_pos = 300
+    ohlc_cols = frame.columns.get_indexer(["Open", "High", "Low", "Close"])
+    frame.iloc[poison_pos, ohlc_cols] = np.nan
+    poison_date = frame.index[poison_pos]
+
+    orig_load = data_mod.load_price_history
+
+    def fake_load(symbol):
+        return frame.copy() if symbol == "SYM0" else orig_load(symbol)
+
+    monkeypatch.setattr(data_mod, "load_price_history", fake_load)
+
+    coverage = bt.CoverageReport(universe=["SYM0"])
+    signals, block_bounds = bt._collect_signals(["SYM0"], None, False, coverage)
+    assert block_bounds is not None
+
+    # No signal generated ON the poisoned bar itself.
+    assert not any(s.date == poison_date for s in signals)
+    assert any(sk.reason == "non_finite_close" for sk in coverage.skips)
+
+    # No signal's fwd_pct ever holds a non-finite value -- a horizon that
+    # would land on the poisoned bar must be ABSENT, never NaN.
+    date_pos = {d: i for i, d in enumerate(frame.index)}
+    saw_a_horizon_that_reached_the_poison_bar = False
+    for s in signals:
+        for h, v in s.fwd_pct.items():
+            assert np.isfinite(v)
+        s_pos = date_pos[s.date]
+        for h in bt.HORIZONS:
+            if s_pos + h == poison_pos:
+                saw_a_horizon_that_reached_the_poison_bar = True
+                assert h not in s.fwd_pct
+    assert saw_a_horizon_that_reached_the_poison_bar
+
+
 def test_run_backtest_reports_insufficient_history_plainly(monkeypatch):
     import nse.data as data_mod
     monkeypatch.setattr(data_mod, "load_price_history", lambda symbol: None)

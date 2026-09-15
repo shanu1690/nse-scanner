@@ -343,6 +343,18 @@ def _collect_signals(universe, months, fade, coverage: CoverageReport):
             blk = _block_of(d, block_bounds)
             if blk is None:
                 continue
+            c0 = close.iloc[i]
+            if not np.isfinite(c0) or c0 == 0:
+                # A data-gap artifact (e.g. a non-trading-day row with NaN
+                # OHLC that slipped into the cache) would otherwise still
+                # score: every price comparison in momentum.py's
+                # analyze_stock/analyze_fade silently evaluates False
+                # against NaN rather than raising, producing a
+                # garbage-but-valid-looking signal. Skip the bar outright
+                # instead of scoring or measuring forward returns against a
+                # price that doesn't exist.
+                coverage.add_skip(sym, "non_finite_close", str(d.date()))
+                continue
             window = full.iloc[: i + 1]
             bench20 = bench60 = None
             b = bench_full[bench_full.index <= d].dropna()
@@ -360,7 +372,15 @@ def _collect_signals(universe, months, fade, coverage: CoverageReport):
             fwd = {}
             for h in HORIZONS:
                 if i + h < n:
-                    fwd[h] = (close.iloc[i + h] / close.iloc[i] - 1) * 100
+                    c1 = close.iloc[i + h]
+                    # Same guard as c0 above, applied to the FUTURE bar this
+                    # horizon lands on -- a NaN close a few bars ahead would
+                    # otherwise poison this signal's forward return even
+                    # though its own bar (c0) was perfectly fine. Treat it
+                    # the same as "insufficient future bars": the key is
+                    # simply absent, per fwd_pct's own docstring.
+                    if np.isfinite(c1) and c1 != 0:
+                        fwd[h] = (c1 / c0 - 1) * 100
             planned_risk = a["price"] - a["stop"]
             trade = simulate_trade(full, i + 1, a["stop"], a["target2"], planned_risk)
             signals.append(Signal(symbol=sym, date=d, block=blk, score=a["score"],
