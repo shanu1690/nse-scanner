@@ -75,7 +75,15 @@ MAX_HOLD_BARS = 10                 # trade simulation's max holding period
 
 # A block shorter than ~2 months can't plausibly represent a distinct market
 # period; 3 rolling + 1 held-out is the minimum shape this module considers
-# a walk-forward at all.
+# a walk-forward at all. That's (3+1)*42 = 168 usable trading days minimum,
+# i.e. a `months` argument below ~168/22 ≈ 7.6 can NEVER clear this gate no
+# matter how deep the price cache is -- `months` caps the usable window
+# itself (_global_test_dates), it doesn't just pick where prices are read
+# from. nse/cli.py's `backtest`/`factors` --period defaults and
+# nse/reporting.py's factor_analysis_months must stay above that floor with
+# real margin, not sit at the edge -- this bit both of them at their old
+# defaults (6 and 3 months respectively) until caught while building
+# Phase 9's backtest-export feature.
 MIN_ROLLING_BLOCKS = 3
 MIN_BLOCK_BARS = 42
 
@@ -629,7 +637,7 @@ def _format_label_shuffle(signals, min_score) -> str:
 
 
 # ------------------------------------------------------------------ public
-def run_backtest(min_score=60.0, months=6, symbols=None, quiet=False, fade=False):
+def run_backtest(min_score=60.0, months=12, symbols=None, quiet=False, fade=False):
     """Test a FIXED (min_score, fade) rule walk-forward, with a genuinely
     held-out final block. This function does not select min_score/fade --
     see run_factor_analysis() for that, kept as a separate step so the same
@@ -677,7 +685,7 @@ def run_backtest(min_score=60.0, months=6, symbols=None, quiet=False, fade=False
             "block_bounds": block_bounds, "held_out": held_out, "rolling": rolling}
 
 
-def run_factor_analysis(months=3, min_score=55.0):
+def run_factor_analysis(months=10, min_score=55.0):
     """Walk-forward factor attribution: which sub-factors predict OOS, using
     only prior blocks' data to set each split (Risk #3 -- the old version
     split a whole-sample median and called the same-sample comparison

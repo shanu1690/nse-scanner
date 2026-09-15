@@ -2,7 +2,7 @@
 
 Usage:
   nse-scan scan --mode all|momentum|options [--refresh] [--top N] [--fade|--no-fade]
-  nse-scan backtest [--period 6m] [--min-score 60] [--fade|--no-fade]
+  nse-scan backtest [--period 6m] [--min-score 60] [--fade|--no-fade] [--export path.json]
   nse-scan factors [--period 3] [--min-score 55]
   nse-scan fusion [--period N] [--fundamentals-db path]
   nse-scan regime [--period N]
@@ -180,6 +180,13 @@ def scan_options(prices, top_n=12, max_seconds=None, chains_out=None):
 def cmd_backtest(args):
     from nse.backtest import run_backtest
     fade = args.fade if args.fade is not None else MOM_CFG.get("style", "momentum") == "fade"
+    if args.export:
+        from nse.reporting import export_backtest_snapshot
+        snapshot = export_backtest_snapshot(args.export, months=args.period,
+                                            min_score=args.min_score, fade=fade)
+        status = "ok" if snapshot["ok"] else f"refused: {snapshot['message']}"
+        print(f"Exported backtest snapshot to {args.export} ({status})")
+        return
     run_backtest(min_score=args.min_score, months=args.period, fade=fade)
 
 
@@ -443,14 +450,24 @@ def main():
     p_scan.set_defaults(func=cmd_scan)
 
     p_bt = sub.add_parser("backtest", help="validate the scanner historically")
-    p_bt.add_argument("--period", type=int, default=6, help="months of history (default 6)")
+    p_bt.add_argument("--period", type=int, default=12,
+                      help="months of history (default 12 -- see nse/backtest.py's "
+                           "MIN_ROLLING_BLOCKS/MIN_BLOCK_BARS comment: below ~8 months "
+                           "the walk-forward sample-size gate can never clear, regardless "
+                           "of how much history is cached)")
     p_bt.add_argument("--min-score", type=float, default=60.0)
     p_bt.add_argument("--fade", action=argparse.BooleanOptionalAction, default=None,
                       help="backtest fade/contrarian style (default from config)")
+    p_bt.add_argument("--export", default=None,
+                      help="write a structured JSON snapshot for the dashboard's Backtest "
+                           "tab to this path instead of printing (e.g. site/data/backtest.json)")
     p_bt.set_defaults(func=cmd_backtest)
 
     p_f = sub.add_parser("factors", help="which sub-signals actually predict moves")
-    p_f.add_argument("--period", type=int, default=3, help="months of history (default 3)")
+    p_f.add_argument("--period", type=int, default=10,
+                     help="months of history (default 10 -- same sample-size-gate floor "
+                          "as `backtest`'s --period; see nse/backtest.py's "
+                          "MIN_ROLLING_BLOCKS/MIN_BLOCK_BARS comment)")
     p_f.add_argument("--min-score", type=float, default=55.0)
     p_f.set_defaults(func=cmd_factors)
 
