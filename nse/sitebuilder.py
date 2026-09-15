@@ -10,8 +10,30 @@ import json
 import os
 import sys
 import time
+from datetime import datetime, timezone
+
+import pandas as pd
 
 from . import momentum as mom
+from . import sectors
+from .quality.validators import DataValidator, scan_bundle_for_credentials
+from .risk import RiskLimits, enforce_delivery_picks
+
+# Nightly is a fresh-checkout CI job with a 45-min job timeout (build + npm +
+# deploy) -- there's no live feed yet (that's Phase 3) to hold to a minutes-
+# level staleness bar. What this threshold actually catches today is a build
+# that has been silently stuck/retrying for an implausibly long time.
+MAX_BUILD_STALENESS_MINUTES = 30
+
+
+class PublishBlocked(RuntimeError):
+    """Raised when DataValidator or the credential scan vetoes a publish.
+
+    The contract (nse/quality/validators.py): a FAIL blocks publishing and
+    the previous bundle stays live. In this repo's script-based, CI-driven
+    pipeline "stays live" means the CI step fails before the later upload/
+    deploy steps run, rather than some background service catching a False.
+    """
 
 
 def _out(path):
@@ -20,22 +42,46 @@ def _out(path):
 
 
 def _dump(path, obj):
+    """Write one JSON file -- but never one carrying a credential-shaped key.
+
+    This is the single choke point every file in the bundle passes through,
+    so wiring the credential scan here (rather than at one hand-picked call
+    site) covers prices/*.json and chains/*.json too, now and for any call
+    site added later.
+    """
+    payload = json.dumps(obj, indent=1, allow_nan=False)
+    leaked = scan_bundle_for_credentials(payload)
+    if leaked:
+        raise PublishBlocked(
+            f"credential-shaped key(s) {leaked} found in {path} -- refusing "
+            f"to write it or anything published alongside it"
+        )
     with open(_out(path), "w") as fh:
-        json.dump(obj, fh, indent=1, allow_nan=False)
+        fh.write(payload)
     return path
 
 
-def _price_series(sym, df):
-    """Compact OHLCV rows for the frontend chart (recent 250 bars)."""
+def _rnd(v, digits=2):
+    return round(float(v), digits) if v is not None and not pd.isna(v) else None
+
+
+def _price_series(sym, full):
+    """Compact OHLCV + overlay-indicator rows for the frontend candlestick
+    chart (recent 250 bars). `full` is the INDICATOR-ENRICHED frame
+    (ind.add_all_indicators' output), not the raw OHLCV df -- EMA/Donchian
+    need to be plotted for every bar on the chart, not just read off the
+    last one. Appends new fields after the original [date, o, h, l, c, v]
+    shape rather than reordering it, so PriceChart.jsx's existing
+    series[i][4]-style indexing keeps working unchanged.
+    """
     rows = []
-    for idx, r in df.tail(250).iterrows():
+    for idx, r in full.tail(250).iterrows():
         rows.append([
             idx.date().isoformat(),
-            round(float(r["Open"]), 2),
-            round(float(r["High"]), 2),
-            round(float(r["Low"]), 2),
-            round(float(r["Close"]), 2),
+            _rnd(r["Open"]), _rnd(r["High"]), _rnd(r["Low"]), _rnd(r["Close"]),
             int(r.get("Volume", 0) or 0),
+            _rnd(r.get("EMA21")), _rnd(r.get("EMA50")), _rnd(r.get("EMA200")),
+            _rnd(r.get("DC_HIGH20")), _rnd(r.get("DC_LOW20")),
         ])
     return rows
 
@@ -67,6 +113,14 @@ def _chain_rows(raw):
 
 
 def _delivery_data(sc, prices, bench, fade, top_n):
+    """Returns (publishable delivery payload, every symbol that got scored).
+
+    The second value is deliberately the full scanned population, not the
+    top_n/min_score-filtered picks list -- a strategy correctly filtering
+    140 of 150 names below threshold on a quiet day is not a data-quality
+    problem, and validating coverage against the picks list would treat it
+    as one on every single run.
+    """
     ranked, results = mom.scan_universe(
         prices, bench, min_score=sc.MOM_CFG["min_score"],
         top_n=top_n, fade=fade)
@@ -83,31 +137,95 @@ def _delivery_data(sc, prices, bench, fade, top_n):
             "target2": round(r["target2"], 2),
             "reasons": r.get("reasons", []),
         })
-    return {"style": "fade" if fade else "momentum", "picks": picks}
+    return {"style": "fade" if fade else "momentum", "picks": picks}, results
 
 
-def _options_data(sc, prices, top_n, max_seconds, chains_out):
-    results = sc.scan_options(prices, top_n=top_n, max_seconds=max_seconds,
-                              chains_out=chains_out)
-    picks = []
-    for r in results:
-        if r.get("error") or not r.get("picks"):
+def _validation_frame(scored_results, prices, fetched_at):
+    """The scored-universe frame DataValidator checks before anything publishes.
+
+    analyze_stock()/analyze_fade() don't carry raw volume/high/low (only a
+    volume z-score), so those come from each symbol's own OHLCV frame's last
+    bar -- the same bar the score was computed from.
+    """
+    rows = []
+    for r in scored_results:
+        px = prices.get(r["symbol"])
+        if px is None or not len(px):
             continue
-        pick = r["picks"][0]
-        chain = {k: r[k] for k in (
-            "pcr", "atm_iv", "ivr", "max_pain", "dte", "expected_move_pct",
-            "straddle_prem", "total_oi", "d_oi_total", "reasons") if k in r}
+        last = px.iloc[-1]
+        rows.append({
+            "symbol": r["symbol"],
+            "close": float(last["Close"]),
+            "high": float(last["High"]),
+            "low": float(last["Low"]),
+            "volume": float(last.get("Volume", 0) or 0),
+            "score": r["score"],
+            "fetched_at": fetched_at,
+        })
+    return pd.DataFrame(rows)
+
+
+def _previous_scored_rows(data_dir):
+    """scored_rows from the last successful build's manifest, if any.
+
+    In CI (fresh checkout every run) this is always None -- the continuity
+    check only has teeth across successive local/persistent-disk runs until
+    the bundle itself is served from somewhere that persists between them.
+    """
+    try:
+        with open(os.path.join(data_dir, "manifest.json")) as fh:
+            return json.load(fh).get("scored_rows")
+    except (OSError, ValueError):
+        return None
+
+
+def _options_data(sc, prices, top_n, max_seconds, chains_out, risk_limits, n_open_start=0):
+    """Phase 7's select_option_idea() (budget-capped strategy: spread
+    preferred over naked long, cost/max-loss/breakeven/probability/payoff/
+    thesis) for every symbol scan_options() pulled a chain for, independently
+    re-verified by Phase 8's enforce_option_ideas() -- "defence in depth",
+    never trusting options.py's own cap check alone -- then ranked by
+    modeled probability (never premium; rule 3). cross_source_oi=False on
+    the second analyze_option_chain() pass: scan_options()'s own call
+    already ran cross_source_d_oi() on this same `raw` dict (mutated in
+    place), so a second cross-source fetch would be a wasted network call.
+    """
+    from . import indicators as ind
+    from . import options as opt
+    from .risk import enforce_option_ideas
+
+    sc.scan_options(prices, top_n=top_n, max_seconds=max_seconds, chains_out=chains_out)
+
+    idea_results = []
+    for sym, raw in chains_out.items():
+        trend_df = prices.get(sym)
+        trend = None
+        if trend_df is not None and len(trend_df):
+            _, trend = ind.last_snapshot(ind.add_all_indicators(trend_df))
+        idea_results.append(opt.select_option_idea(
+            sym, raw, trend=trend, budget=risk_limits.options_budget_cap,
+            cross_source_oi=False))
+
+    risk_result = enforce_option_ideas(idea_results, risk_limits, n_open_start=n_open_start)
+    if risk_result.vetoes:
+        print(risk_result.render(), file=sys.stderr)
+
+    picks = []
+    for r in opt.rank_ideas(risk_result.approved):
+        idea, analysis = r["idea"], r["analysis"]
+        chain = {k: analysis[k] for k in (
+            "pcr", "atm_iv", "ivr", "max_pain", "expected_move_pct",
+            "straddle_prem", "total_oi", "d_oi_total", "reasons") if k in analysis}
         picks.append({
-            "symbol": r["symbol"], "score": r["score"],
-            "direction": r["direction"],
-            "spot": r["spot"], "expiry": r["expiry"],
-            "strike": pick["strike"], "premium": pick["premium"],
-            "breakeven": pick["breakeven"],
-            "lot_size": r.get("lot_size"),
-            "amount_per_lot": r.get("amount_per_lot"),
+            "symbol": r["symbol"], "score": analysis["score"], "direction": analysis["direction"],
+            "spot": analysis["spot"], "expiry": analysis["expiry"], "dte": analysis["dte"],
+            "strategy": idea["strategy"], "legs": idea["legs"],
+            "cost": idea["cost"], "max_loss": idea["max_loss"], "max_profit": idea["max_profit"],
+            "breakeven": idea["breakeven"], "probability": idea["probability"],
+            "lot_size": idea["lot_size"], "payoff": idea["payoff"], "thesis": idea["thesis"],
             "chain": chain,
         })
-    return picks
+    return picks, risk_result
 
 
 def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
@@ -118,6 +236,7 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
     from . import tracker
 
     t0 = time.time()
+    t0_dt = datetime.now(timezone.utc)
     data_dir = os.path.join(out_dir, "data")
 
     # 1. prices --------------------------------------------------------------
@@ -141,17 +260,57 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
     fade = sc.MOM_CFG.get("style", "momentum") == "fade"
 
     # 2. delivery picks -------------------------------------------------------
-    delivery = _delivery_data(sc, prices, bench, fade, top_n)
+    delivery, scored_results = _delivery_data(sc, prices, bench, fade, top_n)
+
+    # 2b. data-integrity gate -- veto power over publishing --------------------
+    # Run this before anything is written (including the options chain fetch
+    # below, which is a live network call per symbol -- no point paying for
+    # it if the run isn't going to publish) and before *any* _dump() call, so
+    # a FAIL leaves every existing file in <out_dir>/data untouched.
+    validation_frame = _validation_frame(scored_results, prices, t0_dt)
+    report = DataValidator(max_staleness_minutes=MAX_BUILD_STALENESS_MINUTES).validate(
+        validation_frame, universe=sc.SYMBOLS, as_of=datetime.now(timezone.utc),
+        previous_row_count=_previous_scored_rows(data_dir),
+    )
+    print(report.render(), file=sys.stderr)
+    if not report.may_publish:
+        raise PublishBlocked(
+            f"data validation failed -- leaving the existing bundle at "
+            f"{data_dir} untouched (see the report above)"
+        )
+
+    # 2c. risk gate -- per-pick veto power, not an all-or-nothing block --------
+    # Unlike DataValidator above (a data-integrity problem means don't trust
+    # ANYTHING), a risk-limit breach is about ONE pick, not the whole bundle:
+    # risk-manager.md has "veto power over any pick that breaches limits",
+    # not over the publish itself. Picks that fail here are dropped from
+    # delivery["picks"] (never silently -- see the rendered report) while
+    # everything else still publishes. sector_map comes from nse/sectors.py's
+    # cache (config/sector_map.json, refreshed via `nse-scan refresh-sectors`,
+    # real NSE classification -- see that module for how it was found); a
+    # symbol missing from the cache (never refreshed yet, or NSE has nothing
+    # for it) still shows up in the risk report's sector_unknown list rather
+    # than being silently treated as compliant.
+    risk_limits = RiskLimits.from_config(sc.CONFIG)
+    sector_map = sectors.sector_only_map(sectors.load_sector_map())
+    picks_by_score = sorted(delivery["picks"], key=lambda p: p["score"], reverse=True)
+    risk_result = enforce_delivery_picks(picks_by_score, risk_limits, price_frames=prices,
+                                         sector_map=sector_map)
+    print(risk_result.render(), file=sys.stderr)
+    delivery["picks"] = risk_result.approved
 
     # 3. option picks + raw chains --------------------------------------------
     chains_out = {}
-    options = _options_data(sc, prices, top_n, max_seconds, chains_out)
+    options, options_risk_result = _options_data(
+        sc, prices, top_n, max_seconds, chains_out, risk_limits,
+        n_open_start=len(risk_result.approved))
 
     # 4. scorecard ------------------------------------------------------------
     scorecard = tracker.scorecard_data(sc.DATA_CFG["lookback_days"]) or {
         "del_headers": [], "del_rows": [], "opt_headers": [], "opt_rows": []}
 
     # 5. price series for charted symbols -------------------------------------
+    delivery_levels = {p["symbol"]: p for p in delivery["picks"]}
     charted = sorted({p["symbol"] for p in delivery["picks"]}
                      | {p["symbol"] for p in options})
     price_files = []
@@ -159,16 +318,17 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
         df = prices.get(sym)
         if df is None or not len(df):
             continue
-        idx, row = ind.last_snapshot(ind.add_all_indicators(df))
-        ema = []
-        for i in range(max(0, len(df) - 250), len(df)):
-            ema.append([
-                df.index[i].date().isoformat(),
-                round(float(df["Close"].iloc[i]), 2),
-            ])
+        full = ind.add_all_indicators(df)
+        idx, row = ind.last_snapshot(full)
+        lvl = delivery_levels.get(sym)
         price_files.append(_dump(
             os.path.join(data_dir, "prices", f"{sym}.json"),
-            {"symbol": sym, "series": _price_series(sym, df),
+            {"symbol": sym, "series": _price_series(sym, full),
+             # Entry/stop/target horizontal lines -- Section 9's chart spec
+             # -- only present for symbols that are an actual delivery pick.
+             "levels": ({"entry": lvl["entry"], "stop": lvl["stop"],
+                        "target1": lvl["target1"], "target2": lvl["target2"]}
+                       if lvl else None),
              "last": {
                  "date": idx.date().isoformat(),
                  "close": round(float(row["Close"]), 2),
@@ -206,6 +366,19 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
             "scorecard_rows": (len(scorecard["del_rows"])
                                + len(scorecard["opt_rows"])),
             "build_seconds": round(time.time() - t0, 1),
+            # For _previous_scored_rows() on the *next* run's continuity
+            # check, and as a direct readout of the brief's COVERAGE metric.
+            "scored_rows": len(validation_frame),
+            "coverage_pct": next(
+                (c.detail.get("coverage") for c in report.checks
+                 if c.name == "coverage"), None),
+            "risk_gate": {
+                "delivery_approved": len(risk_result.approved),
+                "delivery_vetoed": len(risk_result.vetoes),
+                "sector_cap_unverified_symbols": len(risk_result.sector_unknown),
+                "options_approved": len(options_risk_result.approved),
+                "options_vetoed": len(options_risk_result.vetoes),
+            },
         }),
     ]
     if not quiet:

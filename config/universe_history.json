@@ -1,0 +1,5 @@
+{
+  "_comment": "Point-in-time NSE/F&O/Nifty universe membership: which symbols were eligible on which dates. Populate from an authoritative index-reconstitution history (Phase 4/5 events ingest) as {symbol, valid_from, valid_to} rows (null bounds = open-ended), then set verified to true. Until then, nse/pit/universe.py falls back to today's static config.yaml universe and every backtest report stamps universe_as_of_confirmed: false -- a known, labeled bias, not a silent one.",
+  "verified": false,
+  "membership": []
+}

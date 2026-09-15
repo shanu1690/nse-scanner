@@ -2,12 +2,17 @@
 
 Usage:
   nse-scan scan --mode all|momentum|options [--refresh] [--top N] [--fade|--no-fade]
-  nse-scan backtest [--period 6m] [--min-score 60] [--fade|--no-fade]
+  nse-scan backtest [--period 6m] [--min-score 60] [--fade|--no-fade] [--export path.json]
+                    [--include-fusion [--fusion-period N] [--fundamentals-db path]]
   nse-scan factors [--period 3] [--min-score 55]
+  nse-scan fusion [--period N] [--fundamentals-db path]
+  nse-scan regime [--period N]
   nse-scan track [--status] [--top N] [--fade|--no-fade]
   nse-scan watch SYMBOL
   nse-scan universe            # list current universe
+  nse-scan refresh-sectors [--symbol SYM]  # fetch real NSE sector classification
   nse-scan site                # emit JSON data for the web dashboard
+  nse-scan verify-bundle [path] # validate a built bundle before deploy
 """
 
 
@@ -178,12 +183,39 @@ def scan_options(prices, top_n=12, max_seconds=None, chains_out=None):
 def cmd_backtest(args):
     from nse.backtest import run_backtest
     fade = args.fade if args.fade is not None else MOM_CFG.get("style", "momentum") == "fade"
+    if args.export:
+        from nse.reporting import export_backtest_snapshot
+        snapshot = export_backtest_snapshot(
+            args.export, months=args.period, min_score=args.min_score, fade=fade,
+            include_fusion=args.include_fusion, fusion_months=args.fusion_period,
+            fundamentals_db=args.fundamentals_db)
+        status = "ok" if snapshot["ok"] else f"refused: {snapshot['message']}"
+        if snapshot.get("ok") and args.include_fusion:
+            fusion = snapshot.get("fusion") or {}
+            fstatus = "ok" if fusion.get("ok") else f"refused: {fusion.get('message')}"
+            status += f", fusion/reliability {fstatus}"
+        print(f"Exported backtest snapshot to {args.export} ({status})")
+        return
     run_backtest(min_score=args.min_score, months=args.period, fade=fade)
 
 
 def cmd_factors(args):
     from nse.backtest import run_factor_analysis
     run_factor_analysis(months=args.period, min_score=args.min_score)
+
+
+def cmd_fusion(args):
+    from nse.fusion import run_fusion_audit
+    result = run_fusion_audit(months=args.period, fundamentals_db=args.fundamentals_db)
+    if not result["ok"]:
+        sys.exit(1)
+
+
+def cmd_regime(args):
+    from nse.regime import run_regime_switch_audit
+    result = run_regime_switch_audit(months=args.period)
+    if not result["ok"]:
+        sys.exit(1)
 
 
 def cmd_watch(args):
@@ -215,7 +247,8 @@ def cmd_watch(args):
     api, exc_type = _new_options_session()
     try:
         raw = api.option_chain_equity(symbol)
-        o = opt.analyze_option_chain(symbol, raw, trend=row)
+        result = opt.select_option_idea(symbol, raw, trend=row, budget=args.budget)
+        o = result["analysis"]
         if o.get("error"):
             print(f"  {o['error']}")
         else:
@@ -227,16 +260,82 @@ def cmd_watch(args):
                 print(f"    strike {p['strike']} prem {p['premium']} breakeven {p['breakeven']} iv {p['iv']}")
             for reason in o["reasons"]:
                 print(f"  * {reason}")
+
+            print(f"\n  Strategy idea (Rs {args.budget:,.0f} budget cap):")
+            idea = result["idea"]
+            if idea is None:
+                print(f"    NO QUALIFYING TRADE -- {result['reason']}")
+                for r in result["rejected"]:
+                    print(f"      rejected: {r['kind']} -- {r['detail']}")
+            else:
+                legs_str = ", ".join(f"{leg['action']} {leg['side']} {leg['strike']} @ {leg['premium']:.2f}"
+                                     for leg in idea["legs"])
+                print(f"    strategy: {idea['strategy']}  legs: {legs_str}")
+                max_profit_str = "unlimited" if idea["max_profit"] is None else f"Rs {idea['max_profit']:,.0f}"
+                print(f"    cost: Rs {idea['cost']:,.0f}  max loss: Rs {idea['max_loss']:,.0f}  "
+                      f"max profit: {max_profit_str}")
+                prob = idea.get("probability")
+                prob_str = f"{prob:.0%}" if prob is not None else "n/a"
+                print(f"    breakeven: {idea['breakeven']}  probability: {prob_str}")
+                print(f"    {idea['thesis']}")
     except (exc_type, ValueError) as exc:
         print(f"  n/a: {exc}")
     finally:
         api.close()
 
 
+def cmd_news(args):
+    """Fetch the configured RSS feeds and store new items (point-in-time,
+    deduped by URL). With --symbol, also prints what's stored for it."""
+    import datetime
+
+    from nse.news import rss_ingest
+    from nse.news.store import NewsStore
+
+    db_path = args.db or os.path.join(ROOT, "data", "news.db")
+    items = rss_ingest.fetch_all(SYMBOLS)
+    with NewsStore(db_path) as store:
+        added = store.put(items)
+        print(f"Fetched {len(items)} items from {len(rss_ingest.FEEDS)} feeds, "
+              f"{added} new (deduped by URL). Store: {db_path}")
+        if args.symbol:
+            sym = args.symbol.upper()
+            rows = store.as_of(sym, datetime.datetime.now(datetime.timezone.utc),
+                               limit=args.limit)
+            if not rows:
+                print(f"No stored news for {sym}.")
+            for r in rows:
+                est = " (estimated timestamp)" if r["published_at_estimated"] else ""
+                print(f"\n  [{r['published_at']}{est}] {r['source']}: {r['headline']}")
+                print(f"    {r['summary']}")
+                print(f"    {r['url']}")
+
+
 def cmd_universe(_args):
     print(f"Universe: {len(SYMBOLS)} symbols")
     for s in SYMBOLS:
         print(f"  {s}")
+
+
+def cmd_refresh_sectors(args):
+    """Fetch real NSE sector/industry classification for the universe and
+    cache it to config/sector_map.json -- see nse/sectors.py. Sector
+    classifications change rarely (only on a real corporate reclassification),
+    so this is a manual/occasional refresh, not part of the nightly job."""
+    from nse import sectors
+    symbols = [args.symbol.upper()] if args.symbol else SYMBOLS
+    print(f"Fetching sector classification for {len(symbols)} symbol(s) from NSE "
+          f"(~{len(symbols) * sectors.REQUEST_GAP:.0f}s at the courtesy rate limit)...")
+    fresh = sectors.fetch_sector_map(symbols, quiet=False)
+    existing = sectors.load_sector_map()
+    existing.update(fresh)
+    sectors.save_sector_map(existing)
+    missing = [s for s in symbols if s not in fresh]
+    print(f"\n{len(fresh)}/{len(symbols)} fetched this run, {len(existing)} total cached "
+          f"-> {sectors.DEFAULT_SECTOR_MAP_PATH}")
+    if missing:
+        print(f"No sector data for {len(missing)} symbol(s): {missing[:20]}"
+             f"{' ...' if len(missing) > 20 else ''}")
 
 
 def cmd_site(args):
@@ -248,6 +347,19 @@ def cmd_site(args):
         refresh=args.refresh,
         max_seconds=args.max_seconds,
     )
+
+
+def cmd_verify_bundle(args):
+    """Phase 10: post-write bundle validation, independent of the in-process
+    DataValidator gate `nse-scan site` already ran -- meant to run as its own
+    CI step right before a deploy. Exits non-zero on any FAIL so CI can gate
+    on it directly."""
+    from nse.quality.bundle_check import verify_bundle
+    data_dir = os.path.join(args.path, "data") if os.path.isdir(os.path.join(args.path, "data")) else args.path
+    report = verify_bundle(data_dir)
+    print(report.render())
+    if not report.may_publish:
+        sys.exit(1)
 
 
 def _today_delivery_picks(prices, bench, fade, top_n):
@@ -381,23 +493,72 @@ def main():
     p_scan.set_defaults(func=cmd_scan)
 
     p_bt = sub.add_parser("backtest", help="validate the scanner historically")
-    p_bt.add_argument("--period", type=int, default=6, help="months of history (default 6)")
+    p_bt.add_argument("--period", type=int, default=12,
+                      help="months of history (default 12 -- see nse/backtest.py's "
+                           "MIN_ROLLING_BLOCKS/MIN_BLOCK_BARS comment: below ~8 months "
+                           "the walk-forward sample-size gate can never clear, regardless "
+                           "of how much history is cached)")
     p_bt.add_argument("--min-score", type=float, default=60.0)
     p_bt.add_argument("--fade", action=argparse.BooleanOptionalAction, default=None,
                       help="backtest fade/contrarian style (default from config)")
+    p_bt.add_argument("--export", default=None,
+                      help="write a structured JSON snapshot for the dashboard's Backtest "
+                           "tab to this path instead of printing (e.g. site/data/backtest.json)")
+    p_bt.add_argument("--include-fusion", action="store_true",
+                      help="also run the Phase 6 fusion audit and embed its reliability "
+                           "curve/Brier score in the export (--export only; a second "
+                           "15-20+ min walk-forward run, off by default -- see "
+                           "nse/reporting.py's module docstring)")
+    p_bt.add_argument("--fusion-period", type=int, default=None,
+                      help="months of history for the fusion audit when --include-fusion "
+                           "is set (default: all available, same as `nse-scan fusion`)")
+    p_bt.add_argument("--fundamentals-db", default=None,
+                      help="fundamentals PointInTimeStore path for the fusion audit "
+                           "(default: data/pit.db)")
     p_bt.set_defaults(func=cmd_backtest)
 
     p_f = sub.add_parser("factors", help="which sub-signals actually predict moves")
-    p_f.add_argument("--period", type=int, default=3, help="months of history (default 3)")
+    p_f.add_argument("--period", type=int, default=10,
+                     help="months of history (default 10 -- same sample-size-gate floor "
+                          "as `backtest`'s --period; see nse/backtest.py's "
+                          "MIN_ROLLING_BLOCKS/MIN_BLOCK_BARS comment)")
     p_f.add_argument("--min-score", type=float, default=55.0)
     p_f.set_defaults(func=cmd_factors)
 
+    p_fu = sub.add_parser("fusion", help="Phase 6: calibrated fusion model audit (Brier, "
+                          "reliability, lift vs the technical-score baseline)")
+    p_fu.add_argument("--period", type=int, default=None,
+                      help="months of history (default: all available)")
+    p_fu.add_argument("--fundamentals-db", default=None,
+                      help="fundamentals PointInTimeStore path (default: data/pit.db)")
+    p_fu.set_defaults(func=cmd_fusion)
+
+    p_rg = sub.add_parser("regime", help="Phase 6: regime-conditional style switching vs "
+                          "the static rule, out-of-sample")
+    p_rg.add_argument("--period", type=int, default=None,
+                      help="months of history (default: all available)")
+    p_rg.set_defaults(func=cmd_regime)
+
     p_w = sub.add_parser("watch", help="deep-dive one symbol")
     p_w.add_argument("symbol")
+    p_w.add_argument("--budget", type=float, default=opt.MAX_BUDGET_RS,
+                     help=f"option idea budget cap in Rs (default {opt.MAX_BUDGET_RS:,.0f})")
     p_w.set_defaults(func=cmd_watch)
 
     p_u = sub.add_parser("universe", help="list universe")
     p_u.set_defaults(func=cmd_universe)
+
+    p_sec = sub.add_parser("refresh-sectors", help="fetch real NSE sector classification "
+                           "for the universe (feeds the risk gate's sector cap)")
+    p_sec.add_argument("--symbol", default=None, help="refresh just this one symbol")
+    p_sec.set_defaults(func=cmd_refresh_sectors)
+
+    p_news = sub.add_parser("news", help="fetch RSS news and store it (point-in-time)")
+    p_news.add_argument("--db", default=None, help="news store path (default: data/news.db)")
+    p_news.add_argument("--symbol", default=None,
+                        help="print stored news for one symbol after fetching")
+    p_news.add_argument("--limit", type=int, default=10)
+    p_news.set_defaults(func=cmd_news)
 
     p_site = sub.add_parser("site", help="emit JSON data for the web dashboard")
     p_site.add_argument("--out", default="site", help="output dir (default: site)")
@@ -407,6 +568,12 @@ def main():
     p_site.add_argument("--refresh", action="store_true",
                         help="force-refetch every symbol's price history")
     p_site.set_defaults(func=cmd_site)
+
+    p_vb = sub.add_parser("verify-bundle", help="Phase 10: validate a built site "
+                          "bundle before deploy (independent of the in-process gate)")
+    p_vb.add_argument("path", nargs="?", default="site",
+                      help="site output dir, or its data/ subdir directly (default: site)")
+    p_vb.set_defaults(func=cmd_verify_bundle)
 
     p_t = sub.add_parser("track", help="save today's picks + show their scorecard")
     p_t.add_argument("--status", action="store_true",

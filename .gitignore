@@ -1,6 +1,15 @@
 # secrets - never commit
 secrets.yaml
+secrets.yml
 .env
+.env.*
+!.env.example
+credentials.json
+config/secrets.yaml
+*.pem
+*.key
+.smartapi_session
+.jwt_cache
 
 # python
 __pycache__/
@@ -22,6 +31,8 @@ data/cache/
 data/reports/
 data/iv_history/
 data/cron.log
+data/news.db
+data/pit.db
 logs/
 
 # os / editor

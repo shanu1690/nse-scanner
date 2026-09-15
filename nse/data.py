@@ -6,6 +6,9 @@ import time
 
 import pandas as pd
 
+from nse.quality.corporate_actions import detect_unadjusted
+from nse.quality.events import log_event
+
 DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
 HIST_DIR = os.path.join(DATA_DIR, "cache")
 
@@ -33,8 +36,15 @@ def _symbol_ns(symbol):
 
 
 def _yahoo_ticker(symbol):
-    if symbol == "^NSEI":
-        return "^NSEI"
+    """Yahoo Finance index tickers (^NSEI, ^INDIAVIX, ...) are used as-is --
+    appending .NS to an index symbol produces a ticker that doesn't exist
+    (^INDIAVIX.NS 404s; only equity/derivative underlyings need the .NS
+    suffix). Previously this only special-cased ^NSEI, which meant any
+    other index ticker (e.g. nse/regime's ^INDIAVIX fetch) silently
+    corrupted into a nonexistent one -- caught live via Phase 6's fusion
+    audit trying to fetch India VIX for the first time."""
+    if symbol.startswith("^"):
+        return symbol
     return _symbol_ns(symbol)
 
 
@@ -44,6 +54,34 @@ def _fetch_smartapi(symbol, start):
     session = smartapi.get_shared_session()
     return session.candles(symbol, pd.Timestamp(start).date(),
                            pd.Timestamp.today())
+
+
+def _clean_combined(old_df, fresh_df, symbol, source_label):
+    """Merge the existing cache with this run's fresh full-window fetch,
+    refusing to persist a blend that looks like two adjustment regimes
+    stitched together.
+
+    Each side can be internally clean on its own and still disagree with
+    the other -- e.g. a cache built under yfinance (split/dividend-adjusted)
+    merged with a newer SmartAPI fetch that has a hole in it (a failed
+    chunk request), leaving the stale adjusted value sitting next to
+    freshly-raw neighbours right at the gap. `fresh_df` always covers the
+    full lookback window by itself, so when the blend looks wrong the safe
+    move is to drop the stale half rather than guess which side is right.
+    """
+    if old_df is None or not len(old_df):
+        return fresh_df
+    combined = pd.concat([old_df, fresh_df])
+    combined = combined[~combined.index.duplicated(keep="last")]
+    combined = combined[combined.index.notna()].sort_index()
+    if detect_unadjusted(combined.rename(columns=str.lower)).empty:
+        return combined
+    message = (f"cached history disagrees with the fresh {source_label} fetch "
+               f"(looks like an adjusted/unadjusted mismatch) -> dropping the "
+               f"stale cache, keeping only this run's fetch")
+    print(f"  ! {symbol}: {message}", file=sys.stderr)
+    log_event(symbol, "regime_mismatch_drop", message)
+    return fresh_df
 
 
 def update_price_history(symbol, lookback_days=LOOKBACK_DAYS, force=False):
@@ -77,13 +115,10 @@ def update_price_history(symbol, lookback_days=LOOKBACK_DAYS, force=False):
         except (ImportError, OSError, RuntimeError) as exc:
             print(f"  ! smartapi {symbol}: {exc} -> yfinance fallback",
                   file=sys.stderr)
+            log_event(symbol, "provider_fallback", str(exc))
             smart = None
         if smart is not None and len(smart):
-            combined = smart
-            if df is not None and len(df):
-                combined = pd.concat([df, smart])
-                combined = combined[~combined.index.duplicated(keep="last")]
-                combined = combined[combined.index.notna()].sort_index()
+            combined = _clean_combined(df, smart, symbol, "SmartAPI")
             combined.to_csv(path)
             return combined
         print(f"  ! smartapi {symbol}: unavailable -> yfinance fallback", file=sys.stderr)
@@ -116,12 +151,7 @@ def update_price_history(symbol, lookback_days=LOOKBACK_DAYS, force=False):
                               "Close": "Close", "Volume": "Volume"})
     raw = raw[~raw.index.duplicated(keep="last")].sort_index()
 
-    if df is not None and len(df):
-        combined = pd.concat([df, raw])
-        combined = combined[~combined.index.duplicated(keep="last")].sort_index()
-    else:
-        combined = raw
-
+    combined = _clean_combined(df, raw, symbol, "yfinance")
     combined.to_csv(path)
     return combined
 
