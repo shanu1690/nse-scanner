@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 import pandas as pd
 
 from . import momentum as mom
+from . import sectors
 from .quality.validators import DataValidator, scan_bundle_for_credentials
 from .risk import RiskLimits, enforce_delivery_picks
 
@@ -284,14 +285,17 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
     # risk-manager.md has "veto power over any pick that breaches limits",
     # not over the publish itself. Picks that fail here are dropped from
     # delivery["picks"] (never silently -- see the rendered report) while
-    # everything else still publishes. No verified sector classification
-    # data source exists for this universe (checked live against NSE's
-    # sectoral-index endpoint; see nse/risk/__init__.py), so sector_map is
-    # omitted -- the sector cap simply doesn't run rather than guessing, and
-    # every symbol shows up in the risk report's sector_unknown list.
+    # everything else still publishes. sector_map comes from nse/sectors.py's
+    # cache (config/sector_map.json, refreshed via `nse-scan refresh-sectors`,
+    # real NSE classification -- see that module for how it was found); a
+    # symbol missing from the cache (never refreshed yet, or NSE has nothing
+    # for it) still shows up in the risk report's sector_unknown list rather
+    # than being silently treated as compliant.
     risk_limits = RiskLimits.from_config(sc.CONFIG)
+    sector_map = sectors.sector_only_map(sectors.load_sector_map())
     picks_by_score = sorted(delivery["picks"], key=lambda p: p["score"], reverse=True)
-    risk_result = enforce_delivery_picks(picks_by_score, risk_limits, price_frames=prices)
+    risk_result = enforce_delivery_picks(picks_by_score, risk_limits, price_frames=prices,
+                                         sector_map=sector_map)
     print(risk_result.render(), file=sys.stderr)
     delivery["picks"] = risk_result.approved
 

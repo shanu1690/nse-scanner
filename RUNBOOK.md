@@ -49,6 +49,11 @@ nse-scan regime
 # Today's EOD report, optionally mailed/pushed
 nse-scan report --email --ntfy
 
+# Refresh real NSE sector classification (feeds the risk gate's sector cap)
+# -- rarely needed; sector classification changes only on a real corporate
+# reclassification, not nightly
+nse-scan refresh-sectors
+
 # Save today's picks to the journal + show the scorecard
 nse-scan track
 ```
@@ -98,12 +103,12 @@ omitted. Most relevant to tune for your own use:
 - `options_budget_cap`: defaults to Rs 10,000 per PROJECT_BRIEF.md Section
   5 — change only if you deliberately want a different cap, not to make
   more ideas "fit."
-- `max_sector_pct` / `max_correlation`: **the sector cap currently has
-  nothing to enforce against.** No verified NSE sector-classification data
-  source was found (checked live against NSE's own sectoral-index
-  endpoint — see `nse/risk/__init__.py`'s docstring). Every published pick
-  shows up as "sector unknown" until a real `sector_map` is supplied to
-  `enforce_delivery_picks()`. This is a known, open gap, not a bug.
+- `max_sector_pct` / `max_correlation`: backed by real NSE sector
+  classification (`nse/sectors.py`), cached at `config/sector_map.json`.
+  Refresh it with `nse-scan refresh-sectors` (rarely needed — sector
+  classification changes only on a real corporate reclassification, not
+  nightly). A symbol missing from the cache still shows up as "sector
+  unknown" in the risk report rather than being assumed compliant.
 
 A change here takes effect on the next `nse-scan site` run — nothing needs
 rebuilding beyond that.
@@ -113,8 +118,6 @@ rebuilding beyond that.
 - **No live feed.** Everything is a periodic batch snapshot. "Stale" on the
   dashboard means "old nightly run," not "feed disconnected" in the
   real-time sense Section 4 originally envisioned.
-- **No verified sector data.** Sector cap and sector-based filtering are
-  built and tested but inert against real data.
 - **Fundamentals coverage is thin.** ~25 of 210 universe symbols have any
   BSE XBRL data ingested; bank/NBFC coverage is uneven (BAJFINANCE has
   zero — BSE serves no fetchable document format for it at all, a genuine

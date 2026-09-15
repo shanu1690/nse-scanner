@@ -17,6 +17,35 @@ import nse.tracker as tracker_mod
 from tests.test_sitebuilder_publish_gate import _synthetic_prices, _wire_cli
 
 
+def test_build_uses_the_real_sector_map_when_present(tmp_path, monkeypatch):
+    """Phase: sector data gap. sitebuilder.build() must actually load and
+    pass through nse/sectors.py's cached map, not just accept a sector_map
+    kwarg nothing ever populates."""
+    from nse import sectors as sectors_mod
+
+    symbols = [f"SYM{i}" for i in range(3)]
+    prices = _synthetic_prices(symbols)
+    _wire_cli(monkeypatch, symbols, prices, prices["SYM0"])
+    monkeypatch.setitem(cli_mod.CONFIG, "risk", {
+        "capital": 1_000_000.0, "max_portfolio_heat_pct": 1000.0,
+        "max_sector_pct": 1000.0, "max_open_ideas": 50,
+    })
+    monkeypatch.setattr(sectors_mod, "load_sector_map",
+                        lambda path=sectors_mod.DEFAULT_SECTOR_MAP_PATH: {
+                            "SYM0": {"sector": "Information Technology"},
+                            "SYM1": {"sector": "Financial Services"},
+                        })
+
+    out_dir = tmp_path / "site"
+    sb.build(str(out_dir), top_n=5, quiet=True)
+
+    delivery = json.loads((out_dir / "data" / "delivery.json").read_text())
+    by_symbol = {p["symbol"]: p for p in delivery["picks"]}
+    assert by_symbol["SYM0"]["sector"] == "Information Technology"
+    assert by_symbol["SYM1"]["sector"] == "Financial Services"
+    assert by_symbol["SYM2"]["sector"] is None  # genuinely unmapped, not guessed
+
+
 def test_delivery_picks_carry_risk_sizing_fields(tmp_path, monkeypatch):
     symbols = [f"SYM{i}" for i in range(5)]
     prices = _synthetic_prices(symbols)

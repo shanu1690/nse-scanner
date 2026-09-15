@@ -9,6 +9,7 @@ Usage:
   nse-scan track [--status] [--top N] [--fade|--no-fade]
   nse-scan watch SYMBOL
   nse-scan universe            # list current universe
+  nse-scan refresh-sectors [--symbol SYM]  # fetch real NSE sector classification
   nse-scan site                # emit JSON data for the web dashboard
   nse-scan verify-bundle [path] # validate a built bundle before deploy
 """
@@ -309,6 +310,27 @@ def cmd_universe(_args):
         print(f"  {s}")
 
 
+def cmd_refresh_sectors(args):
+    """Fetch real NSE sector/industry classification for the universe and
+    cache it to config/sector_map.json -- see nse/sectors.py. Sector
+    classifications change rarely (only on a real corporate reclassification),
+    so this is a manual/occasional refresh, not part of the nightly job."""
+    from nse import sectors
+    symbols = [args.symbol.upper()] if args.symbol else SYMBOLS
+    print(f"Fetching sector classification for {len(symbols)} symbol(s) from NSE "
+          f"(~{len(symbols) * sectors.REQUEST_GAP:.0f}s at the courtesy rate limit)...")
+    fresh = sectors.fetch_sector_map(symbols, quiet=False)
+    existing = sectors.load_sector_map()
+    existing.update(fresh)
+    sectors.save_sector_map(existing)
+    missing = [s for s in symbols if s not in fresh]
+    print(f"\n{len(fresh)}/{len(symbols)} fetched this run, {len(existing)} total cached "
+          f"-> {sectors.DEFAULT_SECTOR_MAP_PATH}")
+    if missing:
+        print(f"No sector data for {len(missing)} symbol(s): {missing[:20]}"
+             f"{' ...' if len(missing) > 20 else ''}")
+
+
 def cmd_site(args):
     """Emit JSON data for the web dashboard into <out>/data."""
     from nse import sitebuilder
@@ -507,6 +529,11 @@ def main():
 
     p_u = sub.add_parser("universe", help="list universe")
     p_u.set_defaults(func=cmd_universe)
+
+    p_sec = sub.add_parser("refresh-sectors", help="fetch real NSE sector classification "
+                           "for the universe (feeds the risk gate's sector cap)")
+    p_sec.add_argument("--symbol", default=None, help="refresh just this one symbol")
+    p_sec.set_defaults(func=cmd_refresh_sectors)
 
     p_news = sub.add_parser("news", help="fetch RSS news and store it (point-in-time)")
     p_news.add_argument("--db", default=None, help="news store path (default: data/news.db)")
