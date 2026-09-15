@@ -16,7 +16,7 @@ import pandas as pd
 
 from . import momentum as mom
 from .quality.validators import DataValidator, scan_bundle_for_credentials
-from .risk import RiskGateResult, RiskLimits, RiskVeto, enforce_delivery_picks
+from .risk import RiskLimits, enforce_delivery_picks
 
 # Nightly is a fresh-checkout CI job with a 45-min job timeout (build + npm +
 # deploy) -- there's no live feed yet (that's Phase 3) to hold to a minutes-
@@ -168,46 +168,53 @@ def _previous_scored_rows(data_dir):
         return None
 
 
-def _options_data(sc, prices, top_n, max_seconds, chains_out, risk_limits):
-    results = sc.scan_options(prices, top_n=top_n, max_seconds=max_seconds,
-                              chains_out=chains_out)
+def _options_data(sc, prices, top_n, max_seconds, chains_out, risk_limits, n_open_start=0):
+    """Phase 7's select_option_idea() (budget-capped strategy: spread
+    preferred over naked long, cost/max-loss/breakeven/probability/payoff/
+    thesis) for every symbol scan_options() pulled a chain for, independently
+    re-verified by Phase 8's enforce_option_ideas() -- "defence in depth",
+    never trusting options.py's own cap check alone -- then ranked by
+    modeled probability (never premium; rule 3). cross_source_oi=False on
+    the second analyze_option_chain() pass: scan_options()'s own call
+    already ran cross_source_d_oi() on this same `raw` dict (mutated in
+    place), so a second cross-source fetch would be a wasted network call.
+    """
+    from . import indicators as ind
+    from . import options as opt
+    from .risk import enforce_option_ideas
+
+    sc.scan_options(prices, top_n=top_n, max_seconds=max_seconds, chains_out=chains_out)
+
+    idea_results = []
+    for sym, raw in chains_out.items():
+        trend_df = prices.get(sym)
+        trend = None
+        if trend_df is not None and len(trend_df):
+            _, trend = ind.last_snapshot(ind.add_all_indicators(trend_df))
+        idea_results.append(opt.select_option_idea(
+            sym, raw, trend=trend, budget=risk_limits.options_budget_cap,
+            cross_source_oi=False))
+
+    risk_result = enforce_option_ideas(idea_results, risk_limits, n_open_start=n_open_start)
+    if risk_result.vetoes:
+        print(risk_result.render(), file=sys.stderr)
+
     picks = []
-    budget_vetoes = []
-    for r in results:
-        if r.get("error") or not r.get("picks"):
-            continue
-        pick = r["picks"][0]
-        lot_size = r.get("lot_size")
-        # Independent re-derivation of cost (premium * lot_size), not a
-        # trust of r["amount_per_lot"] -- Phase 8's "defence in depth"
-        # requirement (risk-manager.md: "verified independently of
-        # options-strategist"). This is also the FIRST budget enforcement
-        # this particular dashboard pipeline has ever had: the naive
-        # nearest-strike pick above was never checked against the Rs
-        # 10,000 cap before Phase 8.
-        cost = round(pick["premium"] * lot_size, 2) if lot_size else None
-        if cost is None or cost > risk_limits.options_budget_cap:
-            budget_vetoes.append(RiskVeto(
-                r["symbol"], "options_budget_cap", cost, risk_limits.options_budget_cap,
-                f"cost {'unknown (no lot size)' if cost is None else f'Rs {cost:,.0f}'} "
-                f"{'—' if cost is None else '>'} Rs {risk_limits.options_budget_cap:,.0f} cap"))
-            continue
-        chain = {k: r[k] for k in (
-            "pcr", "atm_iv", "ivr", "max_pain", "dte", "expected_move_pct",
-            "straddle_prem", "total_oi", "d_oi_total", "reasons") if k in r}
+    for r in opt.rank_ideas(risk_result.approved):
+        idea, analysis = r["idea"], r["analysis"]
+        chain = {k: analysis[k] for k in (
+            "pcr", "atm_iv", "ivr", "max_pain", "expected_move_pct",
+            "straddle_prem", "total_oi", "d_oi_total", "reasons") if k in analysis}
         picks.append({
-            "symbol": r["symbol"], "score": r["score"],
-            "direction": r["direction"],
-            "spot": r["spot"], "expiry": r["expiry"],
-            "strike": pick["strike"], "premium": pick["premium"],
-            "breakeven": pick["breakeven"],
-            "lot_size": lot_size,
-            "amount_per_lot": cost,
+            "symbol": r["symbol"], "score": analysis["score"], "direction": analysis["direction"],
+            "spot": analysis["spot"], "expiry": analysis["expiry"], "dte": analysis["dte"],
+            "strategy": idea["strategy"], "legs": idea["legs"],
+            "cost": idea["cost"], "max_loss": idea["max_loss"], "max_profit": idea["max_profit"],
+            "breakeven": idea["breakeven"], "probability": idea["probability"],
+            "lot_size": idea["lot_size"], "payoff": idea["payoff"], "thesis": idea["thesis"],
             "chain": chain,
         })
-    if budget_vetoes:
-        print(RiskGateResult(approved=[], vetoes=budget_vetoes).render(), file=sys.stderr)
-    return picks
+    return picks, risk_result
 
 
 def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
@@ -280,7 +287,9 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
 
     # 3. option picks + raw chains --------------------------------------------
     chains_out = {}
-    options = _options_data(sc, prices, top_n, max_seconds, chains_out, risk_limits)
+    options, options_risk_result = _options_data(
+        sc, prices, top_n, max_seconds, chains_out, risk_limits,
+        n_open_start=len(risk_result.approved))
 
     # 4. scorecard ------------------------------------------------------------
     scorecard = tracker.scorecard_data(sc.DATA_CFG["lookback_days"]) or {
@@ -351,6 +360,8 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
                 "delivery_approved": len(risk_result.approved),
                 "delivery_vetoed": len(risk_result.vetoes),
                 "sector_cap_unverified_symbols": len(risk_result.sector_unknown),
+                "options_approved": len(options_risk_result.approved),
+                "options_vetoed": len(options_risk_result.vetoes),
             },
         }),
     ]
