@@ -78,10 +78,12 @@ def html_table(headers, rows, fmt=None):
     )
 
 
-def render_html(subject, delivery, option, scorecard_data, morning=False):
+def render_html(subject, delivery, option, scorecard_data, morning=False, extra_html=None):
     """Assemble a pretty HTML email body.
     delivery / option: {"headers": [...], "rows": [...], "fmt": [...]}
-    scorecard_data: tracker.scorecard_data() dict or None."""
+    scorecard_data: tracker.scorecard_data() dict or None.
+    extra_html: optional pre-escaped HTML snippet inserted right after the
+    title -- e.g. a risk-gate summary line."""
     from html import escape
 
     head_html = (
@@ -90,6 +92,8 @@ def render_html(subject, delivery, option, scorecard_data, morning=False):
         ".odd{background:#f5f7fa}.even{background:#fff}</style>"
         "<h2 style='color:#1a1a2e'>" + escape(subject) + "</h2>"
     )
+    if extra_html:
+        head_html += extra_html
     if morning:
         head_html += (
             "<div style='background:#fff8e1;border-left:4px solid #f9a825;"
@@ -143,11 +147,15 @@ def render_html(subject, delivery, option, scorecard_data, morning=False):
 
 
 def render(subject, delivery_blocks, option_blocks, scorecard, extra=None):
-    """Assemble the plain-text report body."""
+    """Assemble the plain-text report body. `extra`: optional string (or
+    list of lines) inserted right after the timestamp -- e.g. a risk-gate
+    summary line."""
     lines = []
     lines.append(subject)
     lines.append("=" * 70)
     lines.append(f"Generated: {datetime.datetime.now().strftime('%d %b %Y %H:%M')}")
+    if extra:
+        lines.extend(extra if isinstance(extra, list) else [extra])
     lines.append("")
     if delivery_blocks:
         lines.append("TODAY'S DELIVERY PICKS (entry/stop/targets)")
@@ -173,6 +181,135 @@ def save_report(body, subject):
     with open(path, "w") as fh:
         fh.write(body)
     return path
+
+
+def _legs_summary(legs):
+    parts = []
+    for leg in legs or []:
+        strike = leg.get("strike")
+        strike_str = f"{strike:g}" if isinstance(strike, (int, float)) else "?"
+        parts.append(f"{leg.get('action', '?')} {strike_str}{leg.get('side', '')}")
+    return " / ".join(parts)
+
+
+def build_report_from_bundle(data_dir, lookback_days=860, morning=False):
+    """Build the daily report from an ALREADY-BUILT, ALREADY-RISK-GATED
+    site data bundle (site/data/delivery.json + options.json, produced by
+    `nse-scan site`) instead of regenerating picks from scratch.
+
+    This exists to close a real gap: the older pick-generation path in
+    cli.py's cmd_report (_today_delivery_picks/_today_option_picks) never
+    went through Phase 7's Rs 10,000 options budget cap or Phase 8's risk
+    gate (position sizing, sector/correlation/portfolio-heat caps) -- the
+    exact class of bug that let a real Rs 46,618 PAYTM option chain
+    through uncapped before Phase 8 existed (see nse/risk/). Reading the
+    vetted bundle instead guarantees an emailed pick is the SAME one the
+    dashboard would show, budget cap and position size included, rather
+    than a second, untested code path quietly bypassing the risk gate.
+
+    Journals the vetted picks (tracker.save_picks) so the scorecard section
+    below -- and the dashboard's Journal tab, if it's ever hosted -- has
+    something to track status against over time.
+    """
+    import json
+
+    from tabulate import tabulate
+
+    from . import tracker
+
+    def _load(name):
+        path = os.path.join(data_dir, name)
+        if not os.path.exists(path):
+            return None
+        with open(path) as fh:
+            return json.load(fh)
+
+    manifest = _load("manifest.json") or {}
+    delivery_bundle = _load("delivery.json") or {"picks": [], "style": None}
+    options_bundle = _load("options.json") or {"picks": []}
+    delivery = delivery_bundle.get("picks") or []
+    options = options_bundle.get("picks") or []
+
+    journal_rows = [
+        {"type": "delivery", "symbol": p["symbol"], "score": p["score"],
+         "entry": p["entry"], "stop": p["stop"], "target1": p["target1"],
+         "target2": p["target2"], "style": delivery_bundle.get("style")}
+        for p in delivery
+    ] + [
+        {"type": "options", "symbol": p["symbol"], "score": p.get("score"),
+         "direction": p.get("direction"),
+         "strike": (p.get("legs") or [{}])[0].get("strike"),
+         "premium": (p.get("legs") or [{}])[0].get("premium"),
+         "breakeven": p.get("breakeven"), "spot": p.get("spot"),
+         "expiry": p.get("expiry"), "lot_size": p.get("lot_size"),
+         "amount_per_lot": p.get("cost")}
+        for p in options
+    ]
+    if journal_rows:
+        tracker.save_picks(journal_rows)
+
+    scorecard = tracker.scorecard(lookback_days)
+    scorecard_rows = tracker.scorecard_data(lookback_days)
+
+    dheaders = ["SYMBOL", "SCORE", "ENTRY", "STOP", "T1", "T2", "SIZE", "RISK_RS", "R:R", "SECTOR"]
+    drows = [[p["symbol"], p["score"], p["entry"], p["stop"], p["target1"], p["target2"],
+              p.get("position_size", "-"), p.get("rupee_risk", "-"),
+              p.get("reward_risk", "-"), p.get("sector") or "unknown"]
+             for p in delivery]
+    dtable = tabulate(drows, headers=dheaders, tablefmt="grid", floatfmt=".2f") if delivery else ""
+
+    oheaders = ["SYMBOL", "DIR", "STRATEGY", "LEGS", "COST_RS", "MAX_LOSS",
+                "MAX_PROFIT", "BREAKEVEN", "PROB_ITM", "EXPIRY"]
+    orows = [[p["symbol"], p.get("direction", "-"), p.get("strategy", "-"),
+              _legs_summary(p.get("legs")), p.get("cost", "-"), p.get("max_loss", "-"),
+              p.get("max_profit", "-"), p.get("breakeven", "-"),
+              f"{p['probability']:.1%}" if p.get("probability") is not None else "-",
+              p.get("expiry", "-")]
+             for p in options]
+    otable = tabulate(orows, headers=oheaders, tablefmt="grid", floatfmt=".2f") if options else ""
+
+    date_str = manifest.get("date") or datetime.date.today().strftime("%d %b %Y")
+    subject_prefix = "MORNING LIST - buy today" if morning else "NSE Scanner report"
+    subject = f"{subject_prefix} - {date_str}"
+
+    risk = manifest.get("risk_gate", {})
+    summary_line = (
+        f"Universe {manifest.get('universe_size', '?')} symbols, coverage "
+        f"{manifest.get('coverage_pct', 0) * 100:.0f}%, provider {manifest.get('provider', '?')}. "
+        f"Risk gate: {risk.get('delivery_approved', '?')} delivery approved "
+        f"({risk.get('delivery_vetoed', '?')} vetoed), "
+        f"{risk.get('options_approved', '?')} options approved "
+        f"({risk.get('options_vetoed', '?')} vetoed) -- the Rs 10,000 options budget "
+        "cap and position-sizing/sector/correlation limits are already applied "
+        "to everything below."
+    )
+
+    from html import escape as _escape
+    body = render(subject, dtable, otable, scorecard, extra=["", summary_line])
+    if morning:
+        body = (
+            "HOW TO BUY TODAY (before you place any order):\n"
+            "  1. Pick only 1-2 names from the delivery list below.\n"
+            "  2. Place a LIMIT order at or below the ENTRY price.\n"
+            "  3. SKIP any stock that opens more than ~1.5% above ENTRY "
+            "(the move already happened - do not chase).\n"
+            "  4. Place your STOP and TARGETS from the table, then leave it alone.\n"
+            "  5. Options: only if you fully understand premium loss. "
+            "Entry = spot near today's open, exit before breakeven erodes.\n"
+            "==========================================================\n\n"
+            + body
+        )
+
+    html_body = render_html(
+        subject,
+        {"headers": dheaders, "rows": drows, "fmt": ["text"] * 2 + ["num"] * 7 + ["text"]},
+        {"headers": oheaders, "rows": orows, "fmt": ["text"] * 4 + ["num"] * 4 + ["text"] * 2},
+        scorecard_rows, morning=morning,
+        extra_html=f"<p style='color:#555'>{_escape(summary_line)}</p>",
+    )
+
+    return {"subject": subject, "body": body, "html_body": html_body,
+            "manifest": manifest, "n_delivery": len(delivery), "n_options": len(options)}
 
 
 def send_email(subject, body, cfg, html_body=None):

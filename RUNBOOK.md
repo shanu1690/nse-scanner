@@ -11,15 +11,30 @@ orders. See `DISCLAIMER.md`.
 
 | Job | Schedule | What it does |
 |---|---|---|
-| `.github/workflows/nightly.yml` | 13:00 UTC (18:30 IST) weekdays, or manual `workflow_dispatch` | Refreshes prices, runs the scanner, builds `site/data/*.json`, runs the risk gate, verifies the bundle, builds the frontend, deploys to GitHub Pages |
+| `.github/workflows/nightly.yml` | 13:00 UTC (18:30 IST) weekdays, or manual `workflow_dispatch` | Refreshes prices, runs the scanner, builds `site/data/*.json`, runs the risk gate, verifies the bundle, emails the day's report |
 | `.github/workflows/ci.yml` | every push/PR to `main` | Runs `pytest` and the frontend build — no deploy |
 | `.github/workflows/secret-scan.yml` | every push/PR | Fails the build if a secret-shaped string appears in the diff |
 
-The dashboard itself is a static site with **no live feed** — Section 4's
+**No public deploy.** The repo is private, and GitHub Pages needs either a
+public repo or a paid plan — a nightly Pages-deploy step used to run here
+and started failing (404 "create deployment") the moment the repo went
+private; see the retired step in this file's git history if you ever need
+it back (e.g. after upgrading to GitHub Pro, or pointing it at a different
+free static host — Netlify/Vercel/Cloudflare Pages all work fine with a
+private source repo). Until then, the dashboard (`frontend/`, still fully
+working) is a **local-only** tool: build it and open it yourself —
+```bash
+nse-scan site --out site --refresh --max-seconds 600   # data bundle
+cd frontend && npm run build                            # -> ../site
+python3 -m http.server 8000 --directory ../site         # serve it
+```
+— rather than a nightly, always-current webpage. What's actually
+always-current is the nightly email (below).
+
+The dashboard and email report both show **no live feed** — Section 4's
 SmartWebSocketV2 backend was never built (out of scope for how far this
-project got); "data as of" on the dashboard means "when the last nightly
-run finished," not real-time. The staleness badge (`api.js`'s
-`manifestAgeMinutes`) reflects exactly that.
+project got); "data as of" means "when the last nightly run finished," not
+real-time.
 
 ## Manual commands
 
@@ -51,7 +66,14 @@ nse-scan factors --period 10
 nse-scan fusion
 nse-scan regime
 
-# Today's EOD report, optionally mailed/pushed
+# Today's EOD report, from the ALREADY RISK-GATED site bundle (what the
+# nightly job does -- picks already cleared Phase 7's budget cap and
+# Phase 8's risk gate). This is the one to automate or trust.
+nse-scan report --from-bundle site/data --email
+
+# Ad-hoc/manual variant: regenerates picks itself, WITHOUT Phase 7/8's
+# budget cap or risk gate -- fine for a quick look, never for automation
+# (see nse/report.py's build_report_from_bundle docstring for why).
 nse-scan report --email --ntfy
 
 # Refresh real NSE sector classification (feeds the risk gate's sector cap)
@@ -65,10 +87,9 @@ nse-scan track
 
 `nse-scan backtest --export` is deliberately **not** part of the nightly
 job: a full walk-forward run against the whole universe takes 15-20+
-minutes, and folding that into the same CI job as the fast daily publish
+minutes, and folding that into the same job as the fast daily scan/email
 risks the job's own 45-minute timeout. Run it yourself when you want the
-Backtest tab's numbers refreshed, commit the resulting `backtest.json`
-under `site/data/`, and it'll ship on the next deploy.
+(locally-built, per above) Backtest tab's numbers refreshed.
 
 ## When the nightly job fails
 
@@ -87,10 +108,9 @@ Diagnosis: open the failed run in Actions and check which step failed.
 |---|---|---|
 | Connectivity check | Angel One endpoints unreachable/down | Usually transient — re-run via `workflow_dispatch`. Check status.angelone.in if it persists. |
 | Build scanner data | SmartAPI token expired/rate-limited, or NSE/BSE blocked | Check the step log for `smartapi rate-limited` / `unavailable -> yfinance fallback` lines — the system degrades to yfinance automatically; a full failure here usually means BOTH providers had a bad day. Re-run. If SmartAPI is consistently failing, check `secrets.yaml`'s TOTP secret hasn't drifted (2FA re-enrollment invalidates it — see PROJECT_BRIEF.md Section 0) and that the repo secrets match. |
-| Build scanner data (DataValidator FAIL, printed in the log) | Coverage below 95%, stale data, or a sanity-range violation | Read the printed `ValidationReport` — it names the exact check and offenders. This is the in-process gate; it already blocked the write, so the old bundle is still live on Pages. |
-| Verify bundle before deploy | A file's missing/malformed, manifest counts disagree with the actual files, or (WARN only, doesn't fail this step) a high provider-fallback rate | Read the printed report from `nse/quality/bundle_check.py` — same structure as DataValidator's. A `credential_scan` FAIL here is the most urgent: something credential-shaped reached a file about to go world-readable — stop, do not manually deploy, investigate before re-running. |
-| Build frontend / npm ci | A dependency version drifted or a real code error | Reproduce locally: `cd frontend && npm ci && npm run build`. |
-| Deploy to GitHub Pages | GitHub Pages outage, or Pages source misconfigured | Check Settings → Pages has "GitHub Actions" as the source. |
+| Build scanner data (DataValidator FAIL, printed in the log) | Coverage below 95%, stale data, or a sanity-range violation | Read the printed `ValidationReport` — it names the exact check and offenders. This is the in-process gate; it already blocked the write, so nothing gets emailed off a bad bundle. |
+| Verify bundle | A file's missing/malformed, or manifest counts disagree with the actual files | Read the printed report from `nse/quality/bundle_check.py` — same structure as DataValidator's. A `credential_scan` FAIL here is the most urgent: something credential-shaped reached a file about to be uploaded as a build artifact — stop, investigate before re-running. |
+| Send daily report (email) | `EMAIL_FROM`/`EMAIL_TO`/`EMAIL_APP_PASSWORD` missing or wrong, or Gmail rejected the login | Check the three secrets exist (Settings → Secrets and variables → Actions) and that `EMAIL_APP_PASSWORD` is a Gmail **App Password** (Google Account → Security → App passwords), not the real account password — Gmail rejects the latter outright for SMTP. |
 
 If SmartAPI credentials are actually compromised (not just expired), that's
 not a "wait and retry" situation — go straight to PROJECT_BRIEF.md Section

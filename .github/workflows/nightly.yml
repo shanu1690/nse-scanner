@@ -1,18 +1,24 @@
 name: nightly
 
-# Runs the scanner after market close (Mon-Fri), emits the data bundle,
-# builds the React dashboard and deploys everything to GitHub Pages.
+# Runs the scanner after market close (Mon-Fri), builds a risk-gated data
+# bundle, and emails the day's picks. No public deploy step: the repo is
+# private and staying that way, so this does NOT push to GitHub Pages
+# (that needs either a public repo or a paid plan -- see RUNBOOK.md for
+# the history of why this changed from an earlier Pages-deploy version).
 #
 # Requires repo secrets (Settings -> Secrets and variables -> Actions):
 #   SMARTAPI_API_KEY       Angel One API key (developer console)
 #   SMARTAPI_CLIENT_ID     Angel One client/trading ID
 #   SMARTAPI_PIN           Angel One 4-digit trading PIN
 #   SMARTAPI_TOTP_SECRET   base32 TOTP secret from the Angel One app
+#   EMAIL_FROM             Gmail address the daily report is sent from
+#   EMAIL_TO               address the daily report is sent to
+#   EMAIL_APP_PASSWORD     Gmail App Password (NOT your real password --
+#                          Google Account -> Security -> App passwords)
 #   NTFY_TOPIC             optional -- ntfy.sh topic for a push notification
-#                          on failure, in addition to the GitHub issue this
-#                          workflow always files (see the "Alert on failure"
-#                          step). Unset is fine; that step just no-ops.
-# and the Pages source set to "GitHub Actions" (Settings -> Pages).
+#                          on FAILURE only, in addition to the GitHub issue
+#                          this workflow always files (see "Alert on
+#                          failure" below). Unset is fine; that step no-ops.
 #
 # Phase 10 hardening: RUNBOOK.md has the full "job failed, what do I do"
 # playbook this workflow's alerting points at.
@@ -25,21 +31,16 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
   issues: write
 
 concurrency:
-  group: pages
+  group: nightly
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  build-and-report:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -69,40 +70,49 @@ jobs:
           SMARTAPI_TOTP_SECRET: ${{ secrets.SMARTAPI_TOTP_SECRET }}
         # Runner is fresh each night: --refresh downloads all prices + the
         # NIFTY benchmark, then option chains run within the 600s budget.
+        # This still runs the full Phase 7/8 pipeline (options budget cap,
+        # risk gate) and writes site/data/*.json -- that bundle is what the
+        # report step below reads from, not a separate/duplicate pipeline.
         run: nse-scan site --out site --refresh --max-seconds 600
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - name: Build frontend
-        run: npm ci && npm run build
-        working-directory: frontend
-
-      # Phase 10: an independent check of the ACTUAL FILES about to go
-      # live -- distinct from (and run after) the in-process DataValidator
-      # gate `nse-scan site` already applied to the pre-write DataFrame.
-      # Same "defence in depth" principle as the options-budget re-check
-      # and the per-file credential scan; see nse/quality/bundle_check.py.
-      - name: Verify bundle before deploy
+      # Phase 10: an independent check of the ACTUAL FILES the report is
+      # about to be built from -- distinct from (and run after) the
+      # in-process DataValidator gate `nse-scan site` already applied to
+      # the pre-write DataFrame. Same "defence in depth" principle as the
+      # options-budget re-check and the per-file credential scan; see
+      # nse/quality/bundle_check.py. A credential_scan FAIL here stops the
+      # job before anything gets emailed.
+      - name: Verify bundle
         run: nse-scan verify-bundle site
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
+      # Reads the ALREADY RISK-GATED site/data bundle (does NOT regenerate
+      # picks itself -- see nse/report.py's build_report_from_bundle
+      # docstring for why that distinction matters: the other pick-
+      # generation path skips Phase 7/8's budget cap and risk gate
+      # entirely). Journals today's picks for the running scorecard.
+      - name: Send daily report (email)
+        env:
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+        run: nse-scan report --from-bundle site/data --email
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      # Keeps the raw data bundle inspectable from the Actions run (the
+      # closest thing to "browse the site" now that nothing is deployed) --
+      # useful for debugging what the email was built from on a given night.
+      - name: Upload data bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-data
+          path: site/data
+          retention-days: 14
 
       # Runs only when an earlier step in this job failed (any of: the
-      # connectivity check, the scan itself, the frontend build, the bundle
-      # verification, or the deploy). Files (or comments on) one issue
-      # rather than a new one per failed night, so repeated failures don't
-      # spam the tracker -- RUNBOOK.md has the response playbook this issue
-      # links to.
+      # connectivity check, the scan itself, the bundle verification, or
+      # sending the report). Files (or comments on) one issue rather than a
+      # new one per failed night, so repeated failures don't spam the
+      # tracker -- RUNBOOK.md has the response playbook this issue links to.
       - name: Alert on failure (GitHub issue)
         if: failure()
         uses: actions/github-script@v7
@@ -123,10 +133,10 @@ jobs:
             } else {
               await github.rest.issues.create({
                 owner: context.repo.owner, repo: context.repo.repo,
-                title: 'Nightly scan/deploy failed',
+                title: 'Nightly scan/report failed',
                 labels: [label],
                 body: [
-                  `The nightly scan/deploy job failed.`,
+                  `The nightly scan/report job failed.`,
                   ``,
                   `Run: ${runUrl}`,
                   ``,

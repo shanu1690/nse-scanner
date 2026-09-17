@@ -8,6 +8,11 @@ Usage:
   nse-scan fusion [--period N] [--fundamentals-db path]
   nse-scan regime [--period N]
   nse-scan track [--status] [--top N] [--fade|--no-fade]
+  nse-scan report [--from-bundle DATA_DIR] [--email] [--ntfy] [--morning]
+                  # --from-bundle (e.g. site/data) is the vetted path: picks
+                  # already cleared Phase 7/8's budget cap + risk gate.
+                  # Without it, picks are regenerated here WITHOUT that gate
+                  # -- fine for a quick manual look, not for automation.
   nse-scan watch SYMBOL
   nse-scan universe            # list current universe
   nse-scan refresh-sectors [--symbol SYM]  # fetch real NSE sector classification
@@ -413,6 +418,36 @@ def cmd_track(args):
 
 def cmd_report(args):
     from nse import report, tracker
+
+    morning = getattr(args, "morning", False)
+
+    if args.from_bundle:
+        # The vetted path: picks already went through Phase 7's Rs 10,000
+        # budget cap and Phase 8's risk gate when `nse-scan site` built this
+        # bundle. See build_report_from_bundle()'s docstring for why the
+        # path below (still here for ad-hoc/manual use) is NOT this.
+        built = report.build_report_from_bundle(
+            args.from_bundle, lookback_days=DATA_CFG["lookback_days"], morning=morning)
+        path = report.save_report(built["body"], built["subject"])
+        print(f"Report saved: {path} "
+              f"({built['n_delivery']} delivery, {built['n_options']} options picks)")
+        cfg = report.load_secrets()
+        sent = []
+        if args.email:
+            to = report.send_email(built["subject"], built["body"], cfg["email"],
+                                   html_body=built["html_body"])
+            sent.append(f"email -> {to}")
+        if args.ntfy:
+            status = report.send_ntfy(built["subject"], built["body"], cfg["ntfy"])
+            sent.append(f"ntfy push (http {status})")
+        print("Sent:" if sent else "Not sent (no --email/--ntfy).", ", ".join(sent))
+        return
+
+    # Legacy/manual path: generates picks itself rather than reading a
+    # vetted bundle. Does NOT go through Phase 7's options budget cap or
+    # Phase 8's risk gate (position sizing, sector/correlation caps) --
+    # kept for a quick ad-hoc look, but nothing automated should use this;
+    # use --from-bundle instead (see nse/report.py's build_report_from_bundle).
     fade = args.fade if args.fade is not None else MOM_CFG.get("style", "momentum") == "fade"
     prices, bench = _prefer_fresh_prices(True, update_missing=False)
     delivery = _today_delivery_picks(prices, bench, fade, args.top or MOM_CFG["top_n"])
@@ -439,7 +474,6 @@ def cmd_report(args):
 
     subject = f"NSE Scanner report - {time.strftime('%d %b %Y')}"
     body = report.render(subject, dtable, otable, scorecard)
-    morning = getattr(args, "morning", False)
     if morning:
         subject = f"MORNING LIST - buy today - {time.strftime('%d %b %Y')}"
         body = (
@@ -591,6 +625,14 @@ def main():
                      help="fade/contrarian style instead of momentum (default from config)")
     p_r.add_argument("--morning", action="store_true",
                      help="morning list mode: adds buy-today checklist + subject")
+    p_r.add_argument("--from-bundle", default=None, metavar="DATA_DIR",
+                     help="build the report from an already-built site data bundle "
+                          "(e.g. site/data, from `nse-scan site`) instead of "
+                          "regenerating picks here. Use this for anything automated "
+                          "(nightly.yml does) -- it's the only path whose picks went "
+                          "through Phase 7's budget cap and Phase 8's risk gate; "
+                          "the default path below does not (see nse/report.py's "
+                          "build_report_from_bundle docstring).")
     p_r.set_defaults(func=cmd_report)
 
     args = parser.parse_args()
