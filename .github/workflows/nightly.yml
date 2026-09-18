@@ -18,10 +18,19 @@ name: nightly
 #   NTFY_TOPIC             optional -- ntfy.sh topic for a push notification
 #                          on FAILURE only, in addition to the GitHub issue
 #                          this workflow always files (see "Alert on
-#                          failure" below). Unset is fine; that step no-ops.
+#                          failure" below), AND used by intraday.yml's
+#                          live monitoring during market hours. Unset is
+#                          fine; failure-alert step no-ops, but intraday
+#                          monitoring then has nowhere to push to.
 #
 # Phase 10 hardening: RUNBOOK.md has the full "job failed, what do I do"
 # playbook this workflow's alerting points at.
+#
+# Also commits a small candidate bundle (data/latest_bundle/*.json) back
+# to the repo -- NOT the full site/ directory, just the few KB
+# delivery.json/options.json/manifest.json intraday.yml's live monitoring
+# reads during the day (approved picks + capacity-only-vetoed candidates,
+# for re-admission if a slot frees up -- see nse/intraday.py).
 
 on:
   schedule:
@@ -30,7 +39,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   issues: write
 
 concurrency:
@@ -84,6 +93,22 @@ jobs:
       # job before anything gets emailed.
       - name: Verify bundle
         run: nse-scan verify-bundle site
+
+      # Small, tracked candidate bundle for intraday.yml's live monitoring
+      # during market hours -- see nse/intraday.py's module docstring.
+      # Deliberately NOT the full site/ directory (still gitignored):
+      # just the few KB these three files come to. A no-op commit (content
+      # genuinely unchanged) is skipped rather than creating an empty commit.
+      - name: Commit today's candidate bundle
+        run: |
+          mkdir -p data/latest_bundle
+          cp site/data/delivery.json site/data/options.json site/data/manifest.json data/latest_bundle/
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/latest_bundle
+          git diff --cached --quiet && echo "No change to the candidate bundle" || \
+            git commit -m "Update today's candidate bundle for intraday monitoring [skip ci]"
+          git push
 
       # Reads the ALREADY RISK-GATED site/data bundle (does NOT regenerate
       # picks itself -- see nse/report.py's build_report_from_bundle

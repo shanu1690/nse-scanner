@@ -87,6 +87,30 @@ def test_tight_portfolio_heat_cap_vetoes_some_picks_and_records_it(tmp_path, mon
     assert len(delivery["picks"]) < 8
 
 
+def test_delivery_vetoed_capacity_carries_entry_stop_for_later_readmission(tmp_path, monkeypatch):
+    """Phase: intraday re-admission. A pick vetoed only for portfolio heat
+    (a capacity problem, not a bad idea) must be carried forward with its
+    entry/stop/score so nse/intraday.py can re-check and re-admit it later
+    in the same session if a slot frees up -- without re-scoring anything."""
+    symbols = [f"SYM{i}" for i in range(8)]
+    prices = _synthetic_prices(symbols)
+    _wire_cli(monkeypatch, symbols, prices, prices["SYM0"])
+    monkeypatch.setitem(cli_mod.CONFIG, "risk", {
+        "capital": 100_000.0, "per_trade_risk_pct": 1.0,
+        "max_portfolio_heat_pct": 2.0, "max_open_ideas": 50,
+    })
+
+    out_dir = tmp_path / "site"
+    sb.build(str(out_dir), top_n=8, quiet=True)
+
+    delivery = json.loads((out_dir / "data" / "delivery.json").read_text())
+    assert delivery["vetoed_capacity"]
+    for v in delivery["vetoed_capacity"]:
+        assert v["veto_rule"] == "portfolio_heat"
+        assert "entry" in v and "stop" in v and "score" in v
+        assert v["symbol"] not in {p["symbol"] for p in delivery["picks"]}
+
+
 def _fake_idea_result(symbol, cost, direction="CE", lot_size=100, probability=0.5,
                        max_profit=None):
     return {
@@ -127,8 +151,8 @@ def test_options_data_drops_pick_over_budget(monkeypatch):
     monkeypatch.setattr(opt, "select_option_idea", fake_select_option_idea)
 
     limits = RiskLimits(options_budget_cap=10_000.0)
-    picks, risk_result = sb._options_data(sc, prices={}, top_n=5, max_seconds=None,
-                                          chains_out={}, risk_limits=limits)
+    picks, risk_result, _ = sb._options_data(sc, prices={}, top_n=5, max_seconds=None,
+                                             chains_out={}, risk_limits=limits)
 
     published = {p["symbol"] for p in picks}
     assert "SYM0" not in published  # over budget -- dropped
@@ -155,8 +179,8 @@ def test_options_data_ranks_by_probability_not_premium(monkeypatch):
     sc = SimpleNamespace(scan_options=fake_scan_options)
     monkeypatch.setattr(opt, "select_option_idea", fake_select_option_idea)
 
-    picks, _ = sb._options_data(sc, prices={}, top_n=5, max_seconds=None,
-                                chains_out={}, risk_limits=RiskLimits())
+    picks, _, _ = sb._options_data(sc, prices={}, top_n=5, max_seconds=None,
+                                   chains_out={}, risk_limits=RiskLimits())
     assert [p["symbol"] for p in picks] == ["PRICEY_HIGH_PROB", "CHEAP_LOW_PROB"]
 
 
@@ -175,6 +199,50 @@ def test_options_data_skips_refused_ideas(monkeypatch):
     sc = SimpleNamespace(scan_options=fake_scan_options)
     monkeypatch.setattr(opt, "select_option_idea", fake_select_option_idea)
 
-    picks, risk_result = sb._options_data(sc, prices={}, top_n=5, max_seconds=None,
-                                          chains_out={}, risk_limits=RiskLimits())
+    picks, risk_result, vetoed_capacity = sb._options_data(
+        sc, prices={}, top_n=5, max_seconds=None, chains_out={}, risk_limits=RiskLimits())
     assert picks == [] and not risk_result.vetoes  # refused, not vetoed -- nothing to re-check
+    assert vetoed_capacity == []
+
+
+def test_options_data_records_vetoed_capacity_only_for_max_open_ideas(monkeypatch):
+    """A good idea vetoed for max_open_ideas (a slot was full) is carried
+    forward with its full idea (legs, cost, lot_size) for later
+    re-admission; a genuinely over-budget idea is a real disqualification
+    and must NOT be carried forward just because a veto also fired.
+
+    Three symbols, in processing order, with a 1-slot cap: OVER_BUDGET
+    fails on budget first (consumes no slot) -> TAKES_SLOT fits and fills
+    the only slot -> NO_ROOM then hits max_open_ideas purely because the
+    slot TAKES_SLOT just filled is gone."""
+    import nse.options as opt
+    from nse.risk import RiskLimits
+
+    def fake_scan_options(prices, top_n=None, max_seconds=None, chains_out=None):
+        chains_out["OVER_BUDGET"] = {"records": {}}
+        chains_out["TAKES_SLOT"] = {"records": {}}
+        chains_out["NO_ROOM"] = {"records": {}}
+        return []
+
+    def fake_select_option_idea(symbol, raw, trend=None, budget=10_000.0, cross_source_oi=True):
+        if symbol == "OVER_BUDGET":
+            return _fake_idea_result(symbol, cost=50_000.0, lot_size=1000)
+        return _fake_idea_result(symbol, cost=2_000.0, lot_size=100)
+
+    sc = SimpleNamespace(scan_options=fake_scan_options)
+    monkeypatch.setattr(opt, "select_option_idea", fake_select_option_idea)
+
+    limits = RiskLimits(options_budget_cap=10_000.0, max_open_ideas=1)
+    picks, risk_result, vetoed_capacity = sb._options_data(
+        sc, prices={}, top_n=5, max_seconds=None, chains_out={}, risk_limits=limits,
+        n_open_start=0)
+
+    assert [p["symbol"] for p in picks] == ["TAKES_SLOT"]
+    veto_symbols = {v.symbol: v.rule for v in risk_result.vetoes}
+    assert veto_symbols.get("OVER_BUDGET") == "options_budget_cap"
+    assert veto_symbols.get("NO_ROOM") == "max_open_ideas"
+
+    carried = {v["symbol"] for v in vetoed_capacity}
+    assert carried == {"NO_ROOM"}
+    entry = vetoed_capacity[0]
+    assert entry["cost"] == 2_000.0 and entry["legs"] and entry["lot_size"] == 100

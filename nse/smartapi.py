@@ -348,6 +348,45 @@ class SmartAPISession:
         q = quotes.get(str(token))
         return self._q_ltp(q) if q else 0.0
 
+    # ---- public: current spot quotes (intraday monitoring, nse/intraday.py)
+
+    def ltp_batch(self, symbols):
+        """Current LTP for a list of NSE equity symbols, one batched call.
+        {symbol: ltp}. A symbol with no scrip-master match or an empty
+        quote is simply absent from the result, not raised -- a monitoring
+        job checking several positions should degrade per-symbol, not
+        abort entirely because one lookup failed."""
+        self._ensure_login()
+        tokens_by_symbol = {}
+        for sym in symbols:
+            c = self._equity_contract(sym)
+            if c and c.get("token"):
+                tokens_by_symbol[sym] = str(c["token"])
+        if not tokens_by_symbol:
+            return {}
+        quotes = self._market_data("NSE", list(tokens_by_symbol.values()))
+        out = {}
+        for sym, tok in tokens_by_symbol.items():
+            q = quotes.get(tok)
+            ltp = self._q_ltp(q) if q else 0.0
+            if ltp:
+                out[sym] = ltp
+        return out
+
+    def index_ltp(self, name="NIFTY"):
+        """Current LTP for an NSE index. None (never raises) if the index
+        isn't in the scrip master or its quote comes back empty -- callers
+        treat a missing read as 'this signal is unavailable this cycle',
+        not a hard failure."""
+        self._ensure_login()
+        contract = next(self._find("NSE", instrumenttype="AMXIDX", name=name), None)
+        if contract is None and name == "NIFTY":
+            contract = {"token": NIFTY_INDEX_TOKEN}
+        if contract is None or not contract.get("token"):
+            return None
+        ltp = self._quote_ltp("NSE", contract["token"])
+        return ltp or None
+
     def _option_greeks(self, symbol, expiry_orig, scale):
         """{(strike, optiontype): iv} for one expiry. Best-effort; {} if it fails."""
         self._ensure_login()

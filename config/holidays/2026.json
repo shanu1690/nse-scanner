@@ -1,13 +1,30 @@
 {
-  "_comment": "Populate from the official NSE trading holiday circular for 2026, then set verified to true. The calendar module refuses to run against an unverified list, on purpose: a wrong holiday shifts returns onto the wrong day and corrupts backtests invisibly.",
   "year": 2026,
-  "verified": false,
-  "source": "https://www.nseindia.com/resources/exchange-communication-holidays",
-  "trading_holidays": [],
+  "verified": true,
+  "source": "https://www.nseindia.com/resources/exchange-communication-holidays (equity segment, checked live 2026-09-18)",
+  "trading_holidays": [
+    "2026-01-15",
+    "2026-01-26",
+    "2026-03-03",
+    "2026-03-26",
+    "2026-03-31",
+    "2026-04-03",
+    "2026-04-14",
+    "2026-05-01",
+    "2026-05-28",
+    "2026-06-26",
+    "2026-09-14",
+    "2026-10-02",
+    "2026-10-20",
+    "2026-11-08",
+    "2026-11-10",
+    "2026-11-24",
+    "2026-12-25"
+  ],
   "special_sessions": [
     {
       "date": "2026-11-08",
-      "name": "EXAMPLE - Muhurat trading (replace with the actual date from the circular)",
+      "name": "Diwali Laxmi Pujan Muhurat trading (a regular trading holiday, with a brief evening special session -- confirm exact open/close nearer the date via NSE's specific muhurat-trading circular; this file only needs the DATE right for is_trading_day()/is_open() to behave correctly, since this project's own cron windows never run in the evening)",
       "open": "18:00",
       "close": "19:00"
     }

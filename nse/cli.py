@@ -13,6 +13,11 @@ Usage:
                   # already cleared Phase 7/8's budget cap + risk gate.
                   # Without it, picks are regenerated here WITHOUT that gate
                   # -- fine for a quick manual look, not for automation.
+  nse-scan intraday-check [--bundle-dir DIR]
+                  # Section 4.3/4.4: one intraday cycle -- invalidation
+                  # alerts always, new-call admission only near a decision
+                  # point (9:45/11:30/14:30 IST). No-ops outside market
+                  # hours. Meant to be run every ~15 min via cron.
   nse-scan watch SYMBOL
   nse-scan universe            # list current universe
   nse-scan refresh-sectors [--symbol SYM]  # fetch real NSE sector classification
@@ -514,6 +519,22 @@ def cmd_report(args):
         print("Not sent (no --email/--ntfy). Re-run with --email to mail the report.")
 
 
+def cmd_intraday_check(args):
+    """One check cycle (PROJECT_BRIEF.md Section 4.3/4.4, Rule 8): cheap
+    invalidation monitoring on open positions every run, new-call
+    admission only near a decision point. No-ops instantly (no SmartAPI
+    calls) outside market hours -- see nse/intraday.py's module docstring
+    for the full design and why this is a cron approximation, not a live
+    feed."""
+    from nse import intraday, report
+
+    cfg = report.load_secrets()
+    kwargs = {"ntfy_cfg": cfg["ntfy"], "quiet": False}
+    if args.bundle_dir:
+        kwargs["bundle_dir"] = args.bundle_dir
+    intraday.run_intraday_check(**kwargs)
+
+
 def main():
     parser = argparse.ArgumentParser(prog="scanner.py", description="NSE delivery + options scanner")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -634,6 +655,15 @@ def main():
                           "the default path below does not (see nse/report.py's "
                           "build_report_from_bundle docstring).")
     p_r.set_defaults(func=cmd_report)
+
+    p_ic = sub.add_parser("intraday-check", help="Section 4.3/4.4: one intraday "
+                          "monitoring cycle -- invalidation alerts always, new-call "
+                          "admission only near a decision point. No-ops outside "
+                          "market hours.")
+    p_ic.add_argument("--bundle-dir", default=None, metavar="DIR",
+                      help="where last night's committed candidate bundle lives "
+                           "(default: data/latest_bundle, see nse/intraday.py)")
+    p_ic.set_defaults(func=cmd_intraday_check)
 
     args = parser.parse_args()
     args.func(args)

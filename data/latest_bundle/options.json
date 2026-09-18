@@ -1,0 +1,726 @@
+{
+ "picks": [
+  {
+   "symbol": "AUROPHARMA",
+   "score": 85.0,
+   "direction": "CE",
+   "spot": 1734.0,
+   "expiry": "29-Sep-2026",
+   "dte": 9,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 1740.0,
+     "premium": 17.7
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 1780.0,
+     "premium": 8.0
+    }
+   ],
+   "cost": 5335.0,
+   "max_loss": 5335.0,
+   "max_profit": 16665.0,
+   "breakeven": 1749.7,
+   "probability": null,
+   "lot_size": 550,
+   "payoff": [
+    {
+     "price": 1473.9,
+     "pnl": -5335.0
+    },
+    {
+     "price": 1499.91,
+     "pnl": -5335.0
+    },
+    {
+     "price": 1525.92,
+     "pnl": -5335.0
+    },
+    {
+     "price": 1551.93,
+     "pnl": -5335.0
+    },
+    {
+     "price": 1577.94,
+     "pnl": -5335.0
+    },
+    {
+     "price": 1603.95,
+     "pnl": -5335.0
+    },
+    {
+     "price": 1629.96,
+     "pnl": -5335.0
+    },
+    {
+     "price": 1655.97,
+     "pnl": -5335.0
+    },
+    {
+     "price": 1681.98,
+     "pnl": -5335.0
+    },
+    {
+     "price": 1707.99,
+     "pnl": -5335.0
+    },
+    {
+     "price": 1734.0,
+     "pnl": -5335.0
+    },
+    {
+     "price": 1760.01,
+     "pnl": 5670.5
+    },
+    {
+     "price": 1786.02,
+     "pnl": 16665.0
+    },
+    {
+     "price": 1812.03,
+     "pnl": 16665.0
+    },
+    {
+     "price": 1838.04,
+     "pnl": 16665.0
+    },
+    {
+     "price": 1864.05,
+     "pnl": 16665.0
+    },
+    {
+     "price": 1890.06,
+     "pnl": 16665.0
+    },
+    {
+     "price": 1916.07,
+     "pnl": 16665.0
+    },
+    {
+     "price": 1942.08,
+     "pnl": 16665.0
+    },
+    {
+     "price": 1968.09,
+     "pnl": 16665.0
+    },
+    {
+     "price": 1994.1,
+     "pnl": 16665.0
+    }
+   ],
+   "thesis": "AUROPHARMA needs to close above 1749.7 by 29-Sep-2026 (9 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: n/a (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 5,335 -- you can lose 100% of the amount paid for this position.",
+   "chain": {
+    "pcr": 0.38,
+    "atm_iv": 0.0,
+    "ivr": 40.0,
+    "max_pain": 1660.0,
+    "expected_move_pct": 0.0,
+    "straddle_prem": 59.7,
+    "total_oi": 8368800,
+    "d_oi_total": -921,
+    "reasons": [
+     "Underlying in uptrend (EMA21 > EMA50)",
+     "PCR 0.38 < 0.7 (put writers active / bullish tone)",
+     "OI falling on price fall (short covering)",
+     "Spot above max pain 1660.0 (gravity pulls up)"
+    ]
+   }
+  },
+  {
+   "symbol": "LAURUSLABS",
+   "score": 92.0,
+   "direction": "CE",
+   "spot": 1954.0,
+   "expiry": "29-Sep-2026",
+   "dte": 9,
+   "strategy": "long",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 2040.0,
+     "premium": 9.4
+    }
+   ],
+   "cost": 7990.0,
+   "max_loss": 7990.0,
+   "max_profit": null,
+   "breakeven": 2049.4,
+   "probability": null,
+   "lot_size": 850,
+   "payoff": [
+    {
+     "price": 1660.9,
+     "pnl": -7990.0
+    },
+    {
+     "price": 1690.21,
+     "pnl": -7990.0
+    },
+    {
+     "price": 1719.52,
+     "pnl": -7990.0
+    },
+    {
+     "price": 1748.83,
+     "pnl": -7990.0
+    },
+    {
+     "price": 1778.14,
+     "pnl": -7990.0
+    },
+    {
+     "price": 1807.45,
+     "pnl": -7990.0
+    },
+    {
+     "price": 1836.76,
+     "pnl": -7990.0
+    },
+    {
+     "price": 1866.07,
+     "pnl": -7990.0
+    },
+    {
+     "price": 1895.38,
+     "pnl": -7990.0
+    },
+    {
+     "price": 1924.69,
+     "pnl": -7990.0
+    },
+    {
+     "price": 1954.0,
+     "pnl": -7990.0
+    },
+    {
+     "price": 1983.31,
+     "pnl": -7990.0
+    },
+    {
+     "price": 2012.62,
+     "pnl": -7990.0
+    },
+    {
+     "price": 2041.93,
+     "pnl": -6349.5
+    },
+    {
+     "price": 2071.24,
+     "pnl": 18564.0
+    },
+    {
+     "price": 2100.55,
+     "pnl": 43477.5
+    },
+    {
+     "price": 2129.86,
+     "pnl": 68391.0
+    },
+    {
+     "price": 2159.17,
+     "pnl": 93304.5
+    },
+    {
+     "price": 2188.48,
+     "pnl": 118218.0
+    },
+    {
+     "price": 2217.79,
+     "pnl": 143131.5
+    },
+    {
+     "price": 2247.1,
+     "pnl": 168045.0
+    }
+   ],
+   "thesis": "LAURUSLABS needs to close above 2049.4 by 29-Sep-2026 (9 trading days away) for this long CE to profit. Modeled probability of finishing there: n/a (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 7,990 -- you can lose 100% of the amount paid for this position.",
+   "chain": {
+    "pcr": 0.67,
+    "atm_iv": 0.0,
+    "ivr": 100.0,
+    "max_pain": 1880.0,
+    "expected_move_pct": 0.0,
+    "straddle_prem": 64.35,
+    "total_oi": 20209600,
+    "d_oi_total": 953,
+    "reasons": [
+     "Underlying in uptrend (EMA21 > EMA50)",
+     "PCR 0.67 < 0.7 (put writers active / bullish tone)",
+     "OI building +953 while price rising (fresh longs)",
+     "Spot above max pain 1880.0 (gravity pulls up)"
+    ]
+   }
+  },
+  {
+   "symbol": "PAYTM",
+   "score": 80.0,
+   "direction": "CE",
+   "spot": 1849.9,
+   "expiry": "29-Sep-2026",
+   "dte": 9,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 1840.0,
+     "premium": 27.5
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 1880.0,
+     "premium": 15.85
+    }
+   ],
+   "cost": 8446.25,
+   "max_loss": 8446.25,
+   "max_profit": 20553.75,
+   "breakeven": 1851.65,
+   "probability": null,
+   "lot_size": 725,
+   "payoff": [
+    {
+     "price": 1572.41,
+     "pnl": -8446.25
+    },
+    {
+     "price": 1600.16,
+     "pnl": -8446.25
+    },
+    {
+     "price": 1627.91,
+     "pnl": -8446.25
+    },
+    {
+     "price": 1655.66,
+     "pnl": -8446.25
+    },
+    {
+     "price": 1683.41,
+     "pnl": -8446.25
+    },
+    {
+     "price": 1711.16,
+     "pnl": -8446.25
+    },
+    {
+     "price": 1738.91,
+     "pnl": -8446.25
+    },
+    {
+     "price": 1766.65,
+     "pnl": -8446.25
+    },
+    {
+     "price": 1794.4,
+     "pnl": -8446.25
+    },
+    {
+     "price": 1822.15,
+     "pnl": -8446.25
+    },
+    {
+     "price": 1849.9,
+     "pnl": -1268.75
+    },
+    {
+     "price": 1877.65,
+     "pnl": 18848.91
+    },
+    {
+     "price": 1905.4,
+     "pnl": 20553.75
+    },
+    {
+     "price": 1933.15,
+     "pnl": 20553.75
+    },
+    {
+     "price": 1960.89,
+     "pnl": 20553.75
+    },
+    {
+     "price": 1988.64,
+     "pnl": 20553.75
+    },
+    {
+     "price": 2016.39,
+     "pnl": 20553.75
+    },
+    {
+     "price": 2044.14,
+     "pnl": 20553.75
+    },
+    {
+     "price": 2071.89,
+     "pnl": 20553.75
+    },
+    {
+     "price": 2099.64,
+     "pnl": 20553.75
+    },
+    {
+     "price": 2127.38,
+     "pnl": 20553.75
+    }
+   ],
+   "thesis": "PAYTM needs to close above 1851.65 by 29-Sep-2026 (9 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: n/a (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 8,446 -- you can lose 100% of the amount paid for this position.",
+   "chain": {
+    "pcr": 0.59,
+    "atm_iv": 0.0,
+    "ivr": 80.0,
+    "max_pain": 1740.0,
+    "expected_move_pct": 0.0,
+    "straddle_prem": 78.5,
+    "total_oi": 27639900,
+    "d_oi_total": -5044,
+    "reasons": [
+     "Underlying in uptrend (EMA21 > EMA50)",
+     "PCR 0.59 < 0.7 (put writers active / bullish tone)",
+     "OI change -5,044",
+     "Spot above max pain 1740.0 (gravity pulls up)"
+    ]
+   }
+  },
+  {
+   "symbol": "IDFCFIRSTB",
+   "score": 65.0,
+   "direction": "CE",
+   "spot": 85.92,
+   "expiry": "29-Sep-2026",
+   "dte": 9,
+   "strategy": "long",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 92.0,
+     "premium": 0.1
+    }
+   ],
+   "cost": 927.5,
+   "max_loss": 927.5,
+   "max_profit": null,
+   "breakeven": 92.1,
+   "probability": null,
+   "lot_size": 9275,
+   "payoff": [
+    {
+     "price": 73.03,
+     "pnl": -927.5
+    },
+    {
+     "price": 74.32,
+     "pnl": -927.5
+    },
+    {
+     "price": 75.61,
+     "pnl": -927.5
+    },
+    {
+     "price": 76.9,
+     "pnl": -927.5
+    },
+    {
+     "price": 78.19,
+     "pnl": -927.5
+    },
+    {
+     "price": 79.48,
+     "pnl": -927.5
+    },
+    {
+     "price": 80.76,
+     "pnl": -927.5
+    },
+    {
+     "price": 82.05,
+     "pnl": -927.5
+    },
+    {
+     "price": 83.34,
+     "pnl": -927.5
+    },
+    {
+     "price": 84.63,
+     "pnl": -927.5
+    },
+    {
+     "price": 85.92,
+     "pnl": -927.5
+    },
+    {
+     "price": 87.21,
+     "pnl": -927.5
+    },
+    {
+     "price": 88.5,
+     "pnl": -927.5
+    },
+    {
+     "price": 89.79,
+     "pnl": -927.5
+    },
+    {
+     "price": 91.08,
+     "pnl": -927.5
+    },
+    {
+     "price": 92.36,
+     "pnl": 2448.6
+    },
+    {
+     "price": 93.65,
+     "pnl": 14402.22
+    },
+    {
+     "price": 94.94,
+     "pnl": 26355.84
+    },
+    {
+     "price": 96.23,
+     "pnl": 38309.46
+    },
+    {
+     "price": 97.52,
+     "pnl": 50263.08
+    },
+    {
+     "price": 98.81,
+     "pnl": 62216.7
+    }
+   ],
+   "thesis": "IDFCFIRSTB needs to close above 92.1 by 29-Sep-2026 (9 trading days away) for this long CE to profit. Modeled probability of finishing there: n/a (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 928 -- you can lose 100% of the amount paid for this position.",
+   "chain": {
+    "pcr": 0.75,
+    "atm_iv": 0.0,
+    "ivr": null,
+    "max_pain": 86.0,
+    "expected_move_pct": 0.0,
+    "straddle_prem": 2.37,
+    "total_oi": 225883350,
+    "d_oi_total": -143,
+    "reasons": [
+     "Underlying in uptrend (EMA21 > EMA50)",
+     "OI change -143",
+     "Spot below max pain 86.0 (gravity pulls down)"
+    ]
+   }
+  }
+ ],
+ "vetoed_capacity": [
+  {
+   "symbol": "DIVISLAB",
+   "score": 80.0,
+   "direction": "CE",
+   "spot": 9375.0,
+   "expiry": "29-Sep-2026",
+   "dte": 9,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 9400.0,
+     "premium": 110.0
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 9600.0,
+     "premium": 48.0
+    }
+   ],
+   "cost": 6200.0,
+   "max_loss": 6200.0,
+   "max_profit": 13800.0,
+   "breakeven": 9462.0,
+   "probability": null,
+   "lot_size": 100,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "RBLBANK",
+   "score": 85.0,
+   "direction": "CE",
+   "spot": 415.9,
+   "expiry": "29-Sep-2026",
+   "dte": 9,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 415.0,
+     "premium": 3.7
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 425.0,
+     "premium": 1.5
+    }
+   ],
+   "cost": 6985.0,
+   "max_loss": 6985.0,
+   "max_profit": 24765.0,
+   "breakeven": 417.2,
+   "probability": null,
+   "lot_size": 3175,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "GLENMARK",
+   "score": 68.0,
+   "direction": "CE",
+   "spot": 2447.4,
+   "expiry": "29-Sep-2026",
+   "dte": 9,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 2440.0,
+     "premium": 33.0
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 2500.0,
+     "premium": 15.8
+    }
+   ],
+   "cost": 6450.0,
+   "max_loss": 6450.0,
+   "max_profit": 16050.0,
+   "breakeven": 2457.2,
+   "probability": null,
+   "lot_size": 375,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "MCX",
+   "score": 68.0,
+   "direction": "CE",
+   "spot": 3260.0,
+   "expiry": "29-Sep-2026",
+   "dte": 9,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 3250.0,
+     "premium": 82.0
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 3350.0,
+     "premium": 42.1
+    }
+   ],
+   "cost": 8977.5,
+   "max_loss": 8977.5,
+   "max_profit": 13522.5,
+   "breakeven": 3289.9,
+   "probability": null,
+   "lot_size": 225,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "ETERNAL",
+   "score": 92.0,
+   "direction": "CE",
+   "spot": 326.85,
+   "expiry": "29-Sep-2026",
+   "dte": 9,
+   "strategy": "long",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 335.0,
+     "premium": 2.65
+    }
+   ],
+   "cost": 6426.25,
+   "max_loss": 6426.25,
+   "max_profit": null,
+   "breakeven": 337.65,
+   "probability": null,
+   "lot_size": 2425,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "PNB",
+   "score": 75.0,
+   "direction": "CE",
+   "spot": 117.27,
+   "expiry": "29-Sep-2026",
+   "dte": 9,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 117.0,
+     "premium": 1.96
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 119.0,
+     "premium": 1.13
+    }
+   ],
+   "cost": 6640.0,
+   "max_loss": 6640.0,
+   "max_profit": 9360.0,
+   "breakeven": 117.83,
+   "probability": null,
+   "lot_size": 8000,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "INDHOTEL",
+   "score": 92.0,
+   "direction": "CE",
+   "spot": 732.75,
+   "expiry": "29-Sep-2026",
+   "dte": 9,
+   "strategy": "long",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 750.0,
+     "premium": 5.1
+    }
+   ],
+   "cost": 5100.0,
+   "max_loss": 5100.0,
+   "max_profit": null,
+   "breakeven": 755.1,
+   "probability": null,
+   "lot_size": 1000,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  }
+ ]
+}

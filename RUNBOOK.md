@@ -11,7 +11,8 @@ orders. See `DISCLAIMER.md`.
 
 | Job | Schedule | What it does |
 |---|---|---|
-| `.github/workflows/nightly.yml` | 13:00 UTC (18:30 IST) weekdays, or manual `workflow_dispatch` | Refreshes prices, runs the scanner, builds `site/data/*.json`, runs the risk gate, verifies the bundle, emails the day's report |
+| `.github/workflows/nightly.yml` | 13:00 UTC (18:30 IST) weekdays, or manual `workflow_dispatch` | Refreshes prices, runs the scanner, builds `site/data/*.json`, runs the risk gate, verifies the bundle, emails the day's report, commits `data/latest_bundle/*.json` for intraday.yml |
+| `.github/workflows/intraday.yml` | every ~15 min, 9:15–15:30 IST weekdays (best-effort; see below) | Invalidation alerts on open positions (always) + new-call admission near a decision point (Section 4.4) — pushed via ntfy. No-ops instantly outside market hours/holidays. |
 | `.github/workflows/ci.yml` | every push/PR to `main` | Runs `pytest` and the frontend build — no deploy |
 | `.github/workflows/secret-scan.yml` | every push/PR | Fails the build if a secret-shaped string appears in the diff |
 
@@ -32,9 +33,62 @@ python3 -m http.server 8000 --directory ../site         # serve it
 always-current is the nightly email (below).
 
 The dashboard and email report both show **no live feed** — Section 4's
-SmartWebSocketV2 backend was never built (out of scope for how far this
-project got); "data as of" means "when the last nightly run finished," not
-real-time.
+originally-specified always-on Render backend + SmartWebSocketV2 stream
+was never built (out of scope for how far this project got). What DOES
+run live is `intraday.yml` below: a free, cron-based approximation —
+REST polling every ~15 minutes, not a persistent tick stream, and Actions
+cron is best-effort (can drift several minutes, per Section 4.3's own
+warning). Good enough to know within ~15 minutes that a stop was hit; not
+a substitute for watching a live tape.
+
+## Intraday monitoring (during market hours)
+
+`nse-scan intraday-check` (run by `intraday.yml` roughly every 15 minutes,
+9:15–15:30 IST weekdays) does two things, following Rule 8 — "do not
+generate new calls continuously; new calls only at defined decision
+points, between them only invalidation alerts":
+
+1. **Invalidation check (every run):** fresh LTP for every open journaled
+   position. Pushes via ntfy ONLY on an actual change since the last
+   check — stop breached, target hit, an option going PROFIT/LOSS.
+   "Still open, nothing new" is silent, by design.
+2. **New-call admission (only within ~10 min of 9:45 / 11:30 / 14:30
+   IST — Section 4.3's three intraday decision points):** re-checks
+   candidates last night's `nse-scan site` run approved-but-capacity-
+   vetoed (`data/latest_bundle/*.json`'s `vetoed_capacity`, e.g. hit the
+   `max_open_ideas` cap) — never a fresh universe re-scan, which would be
+   both expensive and exactly the "generate new calls continuously" Rule
+   8 forbids. Re-admitted only if a slot has actually freed up AND the
+   live price hasn't drifted more than 1.5% from the planned entry (the
+   same "don't chase" rule already in the buy checklist).
+
+**What it deliberately does NOT do**, and why:
+- **No regime-conditional strategy switching.** `nse/regime/compare.py`
+  already found switching momentum/fade on VIX/breadth does not provably
+  beat the static `config.yaml` style out-of-sample — Section 4.4's own
+  instruction is "if it can't [prove out], ship the static rule and say
+  so." A live NIFTY read is shown as an informational note only.
+- **No re-admission for sector/heat/correlation-capped candidates**, only
+  `max_open_ideas` — the other three need a full live reconstruction of
+  portfolio risk from the journal, which carries heterogeneous historical
+  data (older entries predate Phase 8's risk fields) not safe to trust
+  blindly. `max_open_ideas` only needs a count, which is safe.
+- **No pre-open (8:45/9:05 IST) jobs** — those need fresh fundamentals/
+  news/overnight-gap data this module doesn't fetch; last night's bundle
+  stands in for "today's plan" at market open instead.
+
+**Setup:** needs the same `SMARTAPI_*` secrets as `nightly.yml`, plus
+`NTFY_TOPIC` (install the free ntfy app, subscribe to a topic name of your
+choosing, put that name in the secret) — this job has nothing useful to do
+without a push channel; email isn't something you check live during market
+hours the way a phone push is.
+
+Manual one-off check, printed instead of pushed:
+```bash
+nse-scan intraday-check
+```
+No-ops instantly (prints "Market closed", makes zero API calls) outside
+real trading hours — safe to run any time to sanity-check it.
 
 ## Manual commands
 
@@ -83,6 +137,10 @@ nse-scan refresh-sectors
 
 # Save today's picks to the journal + show the scorecard
 nse-scan track
+
+# One intraday monitoring cycle (what intraday.yml runs every ~15 min) --
+# no-ops instantly outside market hours, safe to run any time
+nse-scan intraday-check
 ```
 
 `nse-scan backtest --export` is deliberately **not** part of the nightly
@@ -140,9 +198,11 @@ rebuilding beyond that.
 
 ## Known limitations (read before trusting a number)
 
-- **No live feed.** Everything is a periodic batch snapshot. "Stale" on the
-  dashboard means "old nightly run," not "feed disconnected" in the
-  real-time sense Section 4 originally envisioned.
+- **No true live feed, still.** The dashboard/email remain periodic batch
+  snapshots. `intraday.yml` (see above) adds a free, ~15-minute REST-poll
+  approximation for open-position monitoring during market hours — real
+  value, but best-effort timing (Actions cron can drift), not the
+  persistent WebSocket tick stream Section 4 originally envisioned.
 - **Fundamentals coverage is thin.** ~25 of 210 universe symbols have any
   BSE XBRL data ingested; bank/NBFC coverage is uneven (BAJFINANCE has
   zero — BSE serves no fetchable document format for it at all, a genuine
@@ -171,7 +231,7 @@ rebuilding beyond that.
 ## Where things live
 
 - `nse/` — the actual scanner (data, indicators, momentum, options, risk,
-  fundamentals, news, regime, fusion, backtest, sitebuilder)
+  fundamentals, news, regime, fusion, backtest, sitebuilder, intraday)
 - `nse/quality/` — every publish-time gate: `validators.py` (pre-write
   DataValidator), `bundle_check.py` (post-write, Phase 10), `events.py`
   (provider-fallback / data-integrity log), `corporate_actions.py`
@@ -180,4 +240,12 @@ rebuilding beyond that.
 - `secrets.yaml` (gitignored) / repo Secrets — credentials, never committed
 - `data/` — local caches: price history, the point-in-time fundamentals/
   news stores, the journal, the data-integrity event log
+- `data/latest_bundle/` — small, TRACKED copy of last night's candidate
+  bundle (delivery/options/manifest.json) for `intraday.yml` to read
+  during the day; committed by `nightly.yml`, unlike everything else
+  under `data/cache/`
+- `config/holidays/` — the NSE trading-holiday calendar `nse/calendar/
+  market_calendar.py` reads (verified live against nseindia.com's own
+  holiday page, one file per year, `verified: true` once checked — see
+  that module's docstring for why it refuses to guess)
 - `tests/` — one file per module, run via `pytest -q`

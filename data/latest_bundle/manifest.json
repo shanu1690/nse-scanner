@@ -1,0 +1,19 @@
+{
+ "generated": "2026-09-19T00:02:34",
+ "date": "19 Sep 2026",
+ "provider": "smartapi",
+ "universe_size": 210,
+ "delivery_picks": 6,
+ "option_picks": 4,
+ "scorecard_rows": 282,
+ "build_seconds": 98.6,
+ "scored_rows": 210,
+ "coverage_pct": 1.0,
+ "risk_gate": {
+  "delivery_approved": 6,
+  "delivery_vetoed": 6,
+  "sector_cap_unverified_symbols": 0,
+  "options_approved": 4,
+  "options_vetoed": 7
+ }
+}

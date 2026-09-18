@@ -1,0 +1,73 @@
+name: intraday
+
+# Live-ish monitoring during market hours (PROJECT_BRIEF.md Section 4.3/
+# 4.4, Rule 8). Runs every ~15 minutes; nse/intraday.py's own market-hours
+# check (nse/calendar/market_calendar.py, holiday-aware) makes every run
+# outside 9:15-15:30 IST on a real trading day an instant no-op with ZERO
+# SmartAPI calls -- the cron window below is deliberately a little wider
+# than the session so a slow/early cron tick still lands inside it; the
+# script's own gate is what keeps this cheap and non-wasteful, not the
+# cron window's precision (Actions cron can drift several minutes, per
+# Section 4.3's own warning -- this is the free/best-effort approximation
+# of the originally-specified always-on backend, not a live feed).
+#
+# Two things happen on a run the market-hours gate lets through:
+#   1. Invalidation check (always): fresh LTP on every open journaled
+#      position; a push ONLY on an actual status change (stop breached,
+#      target hit, option profit/loss) -- not on every tick.
+#   2. New-call admission (only within ~10 min of 9:45/11:30/14:30 IST):
+#      re-check candidates nightly.yml's build vetoed ONLY for capacity,
+#      never a fresh universe re-scan (Rule 8: no continuous re-issuing).
+#
+# Requires the SAME SmartAPI secrets as nightly.yml, plus NTFY_TOPIC (this
+# job has nothing useful to do without a push channel -- email isn't
+# checked live during market hours the way a phone push is).
+
+on:
+  schedule:
+    - cron: "*/15 3-10 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: intraday
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install scanner
+        run: pip install -e .
+
+      # Runners are ephemeral -- this is how "don't re-alert an already-
+      # reported drop every 15 minutes" survives between runs without
+      # committing a file to the repo every few minutes. Keyed uniquely
+      # per run so a fresh cache always saves; restore-keys picks up the
+      # most recent previous one. A cache miss (first run of the day, or
+      # eviction) just means one cycle re-evaluates from a blank slate --
+      # nse/intraday.py's own daily reset already assumes this can happen.
+      - name: Restore intraday state
+        uses: actions/cache@v4
+        with:
+          path: data/intraday_state.json
+          key: intraday-state-${{ github.run_id }}
+          restore-keys: |
+            intraday-state-
+
+      - name: Intraday check
+        env:
+          SMARTAPI_API_KEY: ${{ secrets.SMARTAPI_API_KEY }}
+          SMARTAPI_CLIENT_ID: ${{ secrets.SMARTAPI_CLIENT_ID }}
+          SMARTAPI_PIN: ${{ secrets.SMARTAPI_PIN }}
+          SMARTAPI_TOTP_SECRET: ${{ secrets.SMARTAPI_TOTP_SECRET }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: nse-scan intraday-check

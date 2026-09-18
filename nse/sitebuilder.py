@@ -225,7 +225,31 @@ def _options_data(sc, prices, top_n, max_seconds, chains_out, risk_limits, n_ope
             "lot_size": idea["lot_size"], "payoff": idea["payoff"], "thesis": idea["thesis"],
             "chain": chain,
         })
-    return picks, risk_result
+
+    # Candidates vetoed only for CAPACITY (a slot was full, not that the idea
+    # was bad) -- persisted so the intraday job (nse/intraday.py) can
+    # re-admit one later in the same session if a slot frees up, without
+    # re-fetching option chains. Real disqualifications (budget cap blown,
+    # cost mismatch) are NOT carried forward -- those don't become valid
+    # just because room opened up.
+    by_symbol = {r["symbol"]: r for r in idea_results}
+    vetoed_capacity = []
+    for v in risk_result.vetoes:
+        if v.rule != "max_open_ideas":
+            continue
+        r = by_symbol.get(v.symbol)
+        if r is None or r.get("idea") is None:
+            continue
+        idea, analysis = r["idea"], r["analysis"]
+        vetoed_capacity.append({
+            "symbol": r["symbol"], "score": analysis["score"], "direction": analysis["direction"],
+            "spot": analysis["spot"], "expiry": analysis["expiry"], "dte": analysis["dte"],
+            "strategy": idea["strategy"], "legs": idea["legs"], "cost": idea["cost"],
+            "max_loss": idea["max_loss"], "max_profit": idea["max_profit"],
+            "breakeven": idea["breakeven"], "probability": idea["probability"],
+            "lot_size": idea["lot_size"], "veto_rule": v.rule, "veto_detail": v.detail,
+        })
+    return picks, risk_result, vetoed_capacity
 
 
 def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
@@ -299,9 +323,25 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
     print(risk_result.render(), file=sys.stderr)
     delivery["picks"] = risk_result.approved
 
+    # Candidates vetoed only for CAPACITY (portfolio heat, sector cap, max
+    # open ideas, correlation) rather than a genuine data problem -- carried
+    # forward so the intraday job (nse/intraday.py) can re-admit one later
+    # in the same session if a slot frees up (e.g. an earlier pick gets
+    # stopped out), without re-scoring the whole universe. See Rule 8 /
+    # PROJECT_BRIEF.md Section 4.4: new calls only at defined decision
+    # points, but re-admitting an already-scored, already-qualified
+    # candidate when room appears is not "generating a new call".
+    CAPACITY_VETO_RULES = {"portfolio_heat", "max_open_ideas", "sector_cap", "correlation_cap"}
+    by_symbol_score = {p["symbol"]: p for p in picks_by_score}
+    delivery["vetoed_capacity"] = [
+        {**by_symbol_score[v.symbol], "veto_rule": v.rule, "veto_detail": v.detail}
+        for v in risk_result.vetoes
+        if v.rule in CAPACITY_VETO_RULES and v.symbol in by_symbol_score
+    ]
+
     # 3. option picks + raw chains --------------------------------------------
     chains_out = {}
-    options, options_risk_result = _options_data(
+    options, options_risk_result, options_vetoed_capacity = _options_data(
         sc, prices, top_n, max_seconds, chains_out, risk_limits,
         n_open_start=len(risk_result.approved))
 
@@ -354,7 +394,7 @@ def build(out_dir, top_n=12, refresh=False, max_seconds=420, quiet=False):
     files = [
         _dump(os.path.join(data_dir, "delivery.json"), delivery),
         _dump(os.path.join(data_dir, "options.json"),
-              {"picks": options}),
+              {"picks": options, "vetoed_capacity": options_vetoed_capacity}),
         _dump(os.path.join(data_dir, "scorecard.json"), scorecard),
         _dump(os.path.join(data_dir, "manifest.json"), {
             "generated": time.strftime("%Y-%m-%dT%H:%M:%S"),
