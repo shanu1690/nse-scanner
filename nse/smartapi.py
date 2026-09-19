@@ -8,10 +8,10 @@ free SmartAPI. Requires a free Angel One account:
      (developer dashboard -> My Apps).
   3. Put the credentials in secrets.yaml (see secrets.yaml.example):
        smartapi:
-         api_key: "...."
-         client_id: "A123456"
-         pin: "1234"
-         totp_secret: "base32 secret from the TOTP QR code"
+         api_key: <your Angel One API key>
+         client_id: <your Angel One client/trading ID>
+         pin: <your 4-digit trading PIN>
+         totp_secret: <base32 secret from the TOTP QR code>
   4. pip install smartapi-python pyotp
 
 Capabilities:

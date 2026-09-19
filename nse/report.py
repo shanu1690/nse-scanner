@@ -8,9 +8,9 @@ secrets.yaml (project root):
     email:
       from: your.gmail@gmail.com
       to: shanu.shah1690@gmail.com
-      app_password: "16-char Gmail app password"
+      app_password: <your 16-character Gmail App Password>
     ntfy:
-      topic: "nse-scanner-eod"     # your phone subscribes to ntfy.sh/<topic>
+      topic: <a topic name you choose>     # your phone subscribes to ntfy.sh/<topic>
 
 Set EMAIL_FROM / EMAIL_TO / EMAIL_APP_PASSWORD env vars as an alternative.
 """
