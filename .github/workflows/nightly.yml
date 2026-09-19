@@ -1,10 +1,11 @@
 name: nightly
 
 # Runs the scanner after market close (Mon-Fri), builds a risk-gated data
-# bundle, and emails the day's picks. No public deploy step: the repo is
-# private and staying that way, so this does NOT push to GitHub Pages
-# (that needs either a public repo or a paid plan -- see RUNBOOK.md for
-# the history of why this changed from an earlier Pages-deploy version).
+# bundle, emails the day's picks, and deploys the dashboard to GitHub Pages.
+# The repo is now public, so the Pages deploy (which needs a public repo or
+# a paid plan) works again -- see RUNBOOK.md for the history of why this was
+# dropped and then restored. Email + intraday monitoring stay as they are;
+# the dashboard is an additional channel, not a replacement.
 #
 # Requires repo secrets (Settings -> Secrets and variables -> Actions):
 #   SMARTAPI_API_KEY       Angel One API key (developer console)
@@ -41,6 +42,8 @@ on:
 permissions:
   contents: write
   issues: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: nightly
@@ -50,6 +53,9 @@ jobs:
   build-and-report:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -94,6 +100,24 @@ jobs:
       - name: Verify bundle
         run: nse-scan verify-bundle site
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Build frontend
+        run: npm ci && npm run build
+        working-directory: frontend
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
       # Small, tracked candidate bundle for intraday.yml's live monitoring
       # during market hours -- see nse/intraday.py's module docstring.
       # Deliberately NOT the full site/ directory (still gitignored):
@@ -134,8 +158,8 @@ jobs:
           retention-days: 14
 
       # Runs only when an earlier step in this job failed (any of: the
-      # connectivity check, the scan itself, the bundle verification, or
-      # sending the report). Files (or comments on) one issue rather than a
+      # connectivity check, the scan itself, the bundle verification, the
+      # Pages deploy, or sending the report). Files (or comments on) one issue rather than a
       # new one per failed night, so repeated failures don't spam the
       # tracker -- RUNBOOK.md has the response playbook this issue links to.
       - name: Alert on failure (GitHub issue)

@@ -3,14 +3,10 @@
 Daily India NSE scanner for **delivery / momentum stocks** and **option-trading
 picks** (CE/PE with strike, premium, breakeven), plus a **walk-forward
 backtest** that measures the scanner's real hit-rate. A GitHub Actions job
-runs the scan every weekday after market close and emails the day's
-risk-gated picks; there's also a React dashboard (`frontend/`) you can build
-and run locally any time — see RUNBOOK.md for both.
-
-> No public dashboard is deployed right now: the repo is private, and GitHub
-> Pages needs either a public repo or a paid plan. RUNBOOK.md has the detail
-> and the options (a free host that supports private repos, or building the
-> dashboard locally) if you want that back.
+runs the scan every weekday after market close, emails the day's risk-gated
+picks, and deploys a React dashboard (`frontend/`) to GitHub Pages at
+`https://shanu1690.github.io/nse-scanner/` — see RUNBOOK.md for both, and for
+`intraday.yml`'s live invalidation/admission alerts during market hours.
 
 > **Honesty first.** Momentum scanners and "max pain" tools sell comfort, not
 > edge. This tool ranks stocks and prints entry/stop/targets, but the included
@@ -25,18 +21,21 @@ GitHub Actions (cron, Mon-Fri after close)
    │  nse-scan site              ← runs the real scanner, live Angel One SmartAPI
    ▼
 site/data/*.json                 ← risk-gated picks, scorecard, chains, price series
-   │  nse-scan report --from-bundle
-   ▼
-Email                            ← today's picks, budget-capped and risk-gated
+   │                              │
+   │  nse-scan report            │  vite build + upload-pages-artifact
+   │  --from-bundle              │
+   ▼                              ▼
+Email                          GitHub Pages
+today's picks, budget-capped   live dashboard, redeployed nightly
+and risk-gated
 
-(separately, any time)
-site/data/*.json + vite build → frontend/, served locally or deployed
-wherever you like — see RUNBOOK.md
+(during market hours, separately)
+intraday.yml → nse-scan intraday-check → ntfy push
+invalidation alerts + decision-point admission, see RUNBOOK.md
 ```
 
 There is no server to keep awake and nothing to pay for: a scheduled GitHub
-Action runs the scan and emails the report. The dashboard is optional and
-local-only unless you deploy it yourself.
+Action runs the scan, emails the report, and redeploys the dashboard.
 
 ## Local setup
 
@@ -89,23 +88,23 @@ cd frontend && npm run build && npm run preview
 In development, `npm run dev` serves the app and proxies `/data/...` to the
 `site/data` bundle, so you can iterate on the UI without re-running the scan.
 
-## Running it for free on GitHub (email delivery)
+## Running it for free on GitHub (email + dashboard)
 
-1. Create a repo and push this project (never commit `secrets.yaml`).
+1. Create a repo and push this project (never commit `secrets.yaml`). Pages
+   deploy needs the repo to be public (or a paid GitHub plan) — see
+   RUNBOOK.md if you'd rather keep it private and drop the Pages step.
 2. **Secrets** → Settings → Secrets and variables → Actions:
    `SMARTAPI_API_KEY`, `SMARTAPI_CLIENT_ID`, `SMARTAPI_PIN`,
    `SMARTAPI_TOTP_SECRET`, plus `EMAIL_FROM`, `EMAIL_TO`, `EMAIL_APP_PASSWORD`
-   (a Gmail App Password, not your real password) for the daily report.
-3. Push to `main`. The `nightly` workflow runs Mon-Fri at 13:00 UTC (18:30 IST,
-   after market close), scans, and emails the day's risk-gated picks. Trigger
-   it any time with *Run workflow*.
+   (a Gmail App Password, not your real password) for the daily report, and
+   optionally `NTFY_TOPIC` for failure/intraday pushes.
+3. **Settings → Pages** → Source: "GitHub Actions".
+4. Push to `main`. The `nightly` workflow runs Mon-Fri at 13:00 UTC (18:30 IST,
+   after market close), scans, emails the day's risk-gated picks, and
+   redeploys the dashboard. Trigger it any time with *Run workflow*.
 
 The `ci` workflow runs the Python tests and builds the frontend on every push
 (build-check only — nothing is deployed).
-
-Want the dashboard hosted somewhere too? It needs either a public repo or a
-paid GitHub plan for Pages, or a different free host that supports private
-repos (Netlify/Vercel/Cloudflare Pages) — see RUNBOOK.md.
 
 ## What each command does
 

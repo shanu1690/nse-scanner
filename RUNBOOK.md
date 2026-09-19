@@ -11,26 +11,26 @@ orders. See `DISCLAIMER.md`.
 
 | Job | Schedule | What it does |
 |---|---|---|
-| `.github/workflows/nightly.yml` | 13:00 UTC (18:30 IST) weekdays, or manual `workflow_dispatch` | Refreshes prices, runs the scanner, builds `site/data/*.json`, runs the risk gate, verifies the bundle, emails the day's report, commits `data/latest_bundle/*.json` for intraday.yml |
+| `.github/workflows/nightly.yml` | 13:00 UTC (18:30 IST) weekdays, or manual `workflow_dispatch` | Refreshes prices, runs the scanner, builds `site/data/*.json`, runs the risk gate, verifies the bundle, deploys the dashboard to GitHub Pages, emails the day's report, commits `data/latest_bundle/*.json` for intraday.yml |
 | `.github/workflows/intraday.yml` | every ~15 min, 9:15–15:30 IST weekdays (best-effort; see below) | Invalidation alerts on open positions (always) + new-call admission near a decision point (Section 4.4) — pushed via ntfy. No-ops instantly outside market hours/holidays. |
 | `.github/workflows/ci.yml` | every push/PR to `main` | Runs `pytest` and the frontend build — no deploy |
 | `.github/workflows/secret-scan.yml` | every push/PR | Fails the build if a secret-shaped string appears in the diff |
 
-**No public deploy.** The repo is private, and GitHub Pages needs either a
-public repo or a paid plan — a nightly Pages-deploy step used to run here
-and started failing (404 "create deployment") the moment the repo went
-private; see the retired step in this file's git history if you ever need
-it back (e.g. after upgrading to GitHub Pro, or pointing it at a different
-free static host — Netlify/Vercel/Cloudflare Pages all work fine with a
-private source repo). Until then, the dashboard (`frontend/`, still fully
-working) is a **local-only** tool: build it and open it yourself —
+**Public dashboard.** The repo is public (as of 2026-09-19), and `nightly.yml`
+deploys the built `frontend/` + `site/data/*.json` to GitHub Pages every
+night after the scan — `Settings → Pages` source is "GitHub Actions". The
+live URL is `https://shanu1690.github.io/nse-scanner/`. (It was briefly
+private-only and email-only for a stretch — Pages needs a public repo or a
+paid plan, and a nightly Pages-deploy step failed with 404 "create
+deployment" the moment the repo went private; the retired
+email-report-only workflow is in this file's git history if the repo ever
+goes private again.) The nightly email (below) is unaffected either way —
+run it locally against the current data any time:
 ```bash
 nse-scan site --out site --refresh --max-seconds 600   # data bundle
 cd frontend && npm run build                            # -> ../site
-python3 -m http.server 8000 --directory ../site         # serve it
+python3 -m http.server 8000 --directory ../site         # serve it locally
 ```
-— rather than a nightly, always-current webpage. What's actually
-always-current is the nightly email (below).
 
 The dashboard and email report both show **no live feed** — Section 4's
 originally-specified always-on Render backend + SmartWebSocketV2 stream
