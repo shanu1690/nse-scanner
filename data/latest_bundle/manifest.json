@@ -1,19 +1,19 @@
 {
- "generated": "2026-09-25T18:01:22",
- "date": "25 Sep 2026",
+ "generated": "2026-09-28T20:14:02",
+ "date": "28 Sep 2026",
  "provider": "smartapi",
  "universe_size": 210,
  "delivery_picks": 6,
- "option_picks": 4,
+ "option_picks": 0,
  "scorecard_rows": 282,
- "build_seconds": 806.9,
+ "build_seconds": 801.0,
  "scored_rows": 210,
  "coverage_pct": 1.0,
  "risk_gate": {
   "delivery_approved": 6,
   "delivery_vetoed": 6,
   "sector_cap_unverified_symbols": 0,
-  "options_approved": 4,
-  "options_vetoed": 12
+  "options_approved": 0,
+  "options_vetoed": 0
  }
 }
