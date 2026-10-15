@@ -1,12 +1,12 @@
 {
- "generated": "2026-10-14T18:02:33",
- "date": "14 Oct 2026",
+ "generated": "2026-10-15T17:51:55",
+ "date": "15 Oct 2026",
  "provider": "smartapi",
  "universe_size": 210,
  "delivery_picks": 6,
  "option_picks": 4,
  "scorecard_rows": 282,
- "build_seconds": 804.6,
+ "build_seconds": 803.8,
  "scored_rows": 210,
  "coverage_pct": 1.0,
  "risk_gate": {
@@ -14,6 +14,6 @@
   "delivery_vetoed": 6,
   "sector_cap_unverified_symbols": 0,
   "options_approved": 4,
-  "options_vetoed": 11
+  "options_vetoed": 12
  }
 }
