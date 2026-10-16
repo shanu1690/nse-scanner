@@ -2,217 +2,215 @@
  "style": "fade",
  "picks": [
   {
-   "symbol": "MANKIND",
-   "score": 90.0,
-   "entry": 2347.6,
-   "stop": 2252.81,
-   "target1": 2410.8,
-   "target2": 2473.99,
-   "reasons": [
-    "Below EMA50 - washed out",
-    "11% below 52-week high - beaten down",
-    "RSI 44 low - oversold region",
-    "Negative 5d/20d momentum",
-    "Still beating NIFTY by 5.5% over 20d",
-    "Relative strength vs NIFTY positive (only factor with real edge)"
-   ],
-   "position_size": 10,
-   "rupee_risk": 947.9,
-   "risk_pct_of_capital": 0.948,
-   "reward_risk": 1.33,
-   "sector": "Healthcare"
-  },
-  {
-   "symbol": "HYUNDAI",
-   "score": 89.0,
-   "entry": 1985.0,
-   "stop": 1898.53,
-   "target1": 2042.64,
-   "target2": 2100.29,
-   "reasons": [
-    "Below EMA50 - washed out",
-    "20% below 52-week high - beaten down",
-    "RSI 41 low - oversold region",
-    "Negative 5d/20d momentum",
-    "Relative strength vs NIFTY positive (only factor with real edge)"
-   ],
-   "position_size": 11,
-   "rupee_risk": 951.17,
-   "risk_pct_of_capital": 0.951,
-   "reward_risk": 1.33,
-   "sector": "Automobile and Auto Components"
-  },
-  {
    "symbol": "PATANJALI",
-   "score": 88.0,
-   "entry": 365.65,
-   "stop": 350.01,
-   "target1": 376.08,
-   "target2": 386.51,
+   "score": 89.0,
+   "entry": 367.3,
+   "stop": 352.27,
+   "target1": 377.32,
+   "target2": 387.33,
    "reasons": [
-    "Below EMA50 - washed out",
+    "Above EMA50",
     "40% below 52-week high - beaten down",
+    "Still beating NIFTY by 4.2% over 20d",
     "Relative strength vs NIFTY positive (only factor with real edge)"
    ],
-   "position_size": 63,
-   "rupee_risk": 985.32,
-   "risk_pct_of_capital": 0.985,
+   "position_size": 66,
+   "rupee_risk": 991.98,
+   "risk_pct_of_capital": 0.992,
    "reward_risk": 1.33,
    "sector": "Fast Moving Consumer Goods"
   },
   {
    "symbol": "BANDHANBNK",
    "score": 85,
-   "entry": 170.34,
-   "stop": 159.79,
-   "target1": 177.37,
-   "target2": 184.4,
+   "entry": 167.5,
+   "stop": 157.21,
+   "target1": 174.36,
+   "target2": 181.22,
    "reasons": [
     "Below EMA50 - washed out",
-    "23% below 52-week high - beaten down",
+    "24% below 52-week high - beaten down",
     "Negative 5d/20d momentum"
    ],
-   "position_size": 94,
-   "rupee_risk": 991.7,
-   "risk_pct_of_capital": 0.992,
+   "position_size": 97,
+   "rupee_risk": 998.13,
+   "risk_pct_of_capital": 0.998,
    "reward_risk": 1.33,
    "sector": "Financial Services"
   },
   {
    "symbol": "BIOCON",
    "score": 84.0,
-   "entry": 352.0,
-   "stop": 339.15,
-   "target1": 360.57,
-   "target2": 369.14,
+   "entry": 349.2,
+   "stop": 336.73,
+   "target1": 357.51,
+   "target2": 365.83,
    "reasons": [
     "Below EMA50 - washed out",
-    "21% below 52-week high - beaten down",
-    "RSI 30 low - oversold region",
+    "22% below 52-week high - beaten down",
+    "RSI 28 low - oversold region",
     "Negative 5d/20d momentum"
    ],
-   "position_size": 77,
-   "rupee_risk": 989.45,
-   "risk_pct_of_capital": 0.989,
+   "position_size": 80,
+   "rupee_risk": 997.6,
+   "risk_pct_of_capital": 0.998,
    "reward_risk": 1.33,
    "sector": "Healthcare"
   },
   {
    "symbol": "BPCL",
    "score": 84.0,
-   "entry": 293.7,
-   "stop": 282.89,
-   "target1": 300.91,
-   "target2": 308.12,
+   "entry": 293.5,
+   "stop": 282.75,
+   "target1": 300.67,
+   "target2": 307.84,
    "reasons": [
     "Below EMA50 - washed out",
     "25% below 52-week high - beaten down",
     "RSI 43 low - oversold region",
     "Negative 5d/20d momentum"
    ],
-   "position_size": 92,
-   "rupee_risk": 994.52,
-   "risk_pct_of_capital": 0.995,
+   "position_size": 93,
+   "rupee_risk": 999.75,
+   "risk_pct_of_capital": 1.0,
+   "reward_risk": 1.33,
+   "sector": "Oil Gas & Consumable Fuels"
+  },
+  {
+   "symbol": "CIPLA",
+   "score": 84.0,
+   "entry": 1325.1,
+   "stop": 1286.17,
+   "target1": 1351.05,
+   "target2": 1377.0,
+   "reasons": [
+    "Below EMA50 - washed out",
+    "21% below 52-week high - beaten down",
+    "RSI 40 low - oversold region",
+    "Negative 5d/20d momentum"
+   ],
+   "position_size": 25,
+   "rupee_risk": 973.25,
+   "risk_pct_of_capital": 0.973,
+   "reward_risk": 1.33,
+   "sector": "Healthcare"
+  },
+  {
+   "symbol": "COALINDIA",
+   "score": 84.0,
+   "entry": 417.2,
+   "stop": 404.71,
+   "target1": 425.52,
+   "target2": 433.85,
+   "reasons": [
+    "Below EMA50 - washed out",
+    "15% below 52-week high - beaten down",
+    "Negative 5d/20d momentum",
+    "Relative strength vs NIFTY positive (only factor with real edge)"
+   ],
+   "position_size": 80,
+   "rupee_risk": 999.2,
+   "risk_pct_of_capital": 0.999,
    "reward_risk": 1.33,
    "sector": "Oil Gas & Consumable Fuels"
   }
  ],
  "vetoed_capacity": [
   {
-   "symbol": "COCHINSHIP",
-   "score": 84.0,
-   "entry": 1254.0,
-   "stop": 1192.89,
-   "target1": 1294.74,
-   "target2": 1335.47,
-   "reasons": [
-    "Below EMA50 - washed out",
-    "33% below 52-week high - beaten down",
-    "RSI 37 low - oversold region",
-    "Negative 5d/20d momentum"
-   ],
-   "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.84%"
-  },
-  {
    "symbol": "DMART",
    "score": 84.0,
-   "entry": 3378.4,
-   "stop": 3243.55,
-   "target1": 3468.3,
-   "target2": 3558.2,
+   "entry": 3342.0,
+   "stop": 3210.76,
+   "target1": 3429.49,
+   "target2": 3516.98,
    "reasons": [
     "Below EMA50 - washed out",
-    "27% below 52-week high - beaten down",
-    "RSI 30 low - oversold region",
+    "28% below 52-week high - beaten down",
+    "RSI 29 low - oversold region",
     "Negative 5d/20d momentum"
    ],
    "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.80%"
+   "veto_detail": "adding this pick would take portfolio heat to 6.88%"
   },
   {
    "symbol": "FORTIS",
    "score": 84.0,
-   "entry": 746.25,
-   "stop": 709.05,
-   "target1": 771.05,
-   "target2": 795.85,
+   "entry": 736.5,
+   "stop": 700.37,
+   "target1": 760.59,
+   "target2": 784.67,
    "reasons": [
     "Below EMA50 - washed out",
-    "32% below 52-week high - beaten down",
-    "RSI 28 low - oversold region",
+    "33% below 52-week high - beaten down",
+    "RSI 27 low - oversold region",
     "Negative 5d/20d momentum"
    ],
    "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.83%"
+   "veto_detail": "adding this pick would take portfolio heat to 6.94%"
   },
   {
    "symbol": "GMRAIRPORT",
    "score": 84.0,
-   "entry": 90.47,
-   "stop": 86.72,
-   "target1": 92.97,
-   "target2": 95.47,
+   "entry": 89.5,
+   "stop": 85.86,
+   "target1": 91.92,
+   "target2": 94.35,
    "reasons": [
     "Below EMA50 - washed out",
-    "22% below 52-week high - beaten down",
-    "RSI 41 low - oversold region",
+    "23% below 52-week high - beaten down",
+    "RSI 39 low - oversold region",
     "Negative 5d/20d momentum"
    ],
    "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.86%"
+   "veto_detail": "adding this pick would take portfolio heat to 6.96%"
   },
   {
-   "symbol": "IOC",
+   "symbol": "HEROMOTOCO",
    "score": 84.0,
-   "entry": 128.83,
-   "stop": 124.81,
-   "target1": 131.51,
-   "target2": 134.19,
+   "entry": 5225.0,
+   "stop": 5035.84,
+   "target1": 5351.11,
+   "target2": 5477.21,
    "reasons": [
     "Below EMA50 - washed out",
-    "32% below 52-week high - beaten down",
-    "RSI 42 low - oversold region",
-    "Negative 5d/20d momentum"
+    "18% below 52-week high - beaten down",
+    "Negative 5d/20d momentum",
+    "Relative strength vs NIFTY positive (only factor with real edge)"
    ],
    "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.86%"
+   "veto_detail": "adding this pick would take portfolio heat to 6.91%"
   },
   {
    "symbol": "JINDALSTEL",
    "score": 84.0,
-   "entry": 1030.0,
-   "stop": 982.46,
-   "target1": 1061.7,
-   "target2": 1093.39,
+   "entry": 1045.2,
+   "stop": 998.3,
+   "target1": 1076.47,
+   "target2": 1107.73,
    "reasons": [
     "Below EMA50 - washed out",
-    "21% below 52-week high - beaten down",
-    "RSI 35 low - oversold region",
+    "20% below 52-week high - beaten down",
+    "RSI 40 low - oversold region",
     "Negative 5d/20d momentum"
    ],
    "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.86%"
+   "veto_detail": "adding this pick would take portfolio heat to 6.94%"
+  },
+  {
+   "symbol": "JUBLFOOD",
+   "score": 84.0,
+   "entry": 417.95,
+   "stop": 397.95,
+   "target1": 431.28,
+   "target2": 444.62,
+   "reasons": [
+    "Below EMA50 - washed out",
+    "33% below 52-week high - beaten down",
+    "RSI 33 low - oversold region",
+    "Negative 5d/20d momentum"
+   ],
+   "veto_rule": "portfolio_heat",
+   "veto_detail": "adding this pick would take portfolio heat to 6.96%"
   }
  ]
 }

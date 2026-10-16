@@ -2,132 +2,264 @@
  "picks": [
   {
    "symbol": "TECHM",
-   "score": 80.0,
+   "score": 77.0,
    "direction": "CE",
-   "spot": 1650.0,
+   "spot": 1790.0,
    "expiry": "27-Oct-2026",
-   "dte": 11,
+   "dte": 10,
    "strategy": "debit_spread",
    "legs": [
     {
      "action": "BUY",
      "side": "CE",
-     "strike": 1640.0,
-     "premium": 37.8
+     "strike": 1780.0,
+     "premium": 30.8
     },
     {
      "action": "SELL",
      "side": "CE",
-     "strike": 1680.0,
-     "premium": 23.0
+     "strike": 1820.0,
+     "premium": 16.2
     }
    ],
-   "cost": 8880.0,
-   "max_loss": 8880.0,
-   "max_profit": 15120.0,
-   "breakeven": 1654.8,
-   "probability": 0.465110159525937,
+   "cost": 8760.0,
+   "max_loss": 8760.0,
+   "max_profit": 15240.0,
+   "breakeven": 1794.6,
+   "probability": 0.46102205505874005,
    "lot_size": 600,
    "payoff": [
     {
-     "price": 1402.5,
-     "pnl": -8880.0
+     "price": 1521.5,
+     "pnl": -8760.0
     },
     {
-     "price": 1427.25,
-     "pnl": -8880.0
+     "price": 1548.35,
+     "pnl": -8760.0
     },
     {
-     "price": 1452.0,
-     "pnl": -8880.0
+     "price": 1575.2,
+     "pnl": -8760.0
     },
     {
-     "price": 1476.75,
-     "pnl": -8880.0
+     "price": 1602.05,
+     "pnl": -8760.0
     },
     {
-     "price": 1501.5,
-     "pnl": -8880.0
+     "price": 1628.9,
+     "pnl": -8760.0
     },
     {
-     "price": 1526.25,
-     "pnl": -8880.0
+     "price": 1655.75,
+     "pnl": -8760.0
     },
     {
-     "price": 1551.0,
-     "pnl": -8880.0
+     "price": 1682.6,
+     "pnl": -8760.0
     },
     {
-     "price": 1575.75,
-     "pnl": -8880.0
+     "price": 1709.45,
+     "pnl": -8760.0
     },
     {
-     "price": 1600.5,
-     "pnl": -8880.0
+     "price": 1736.3,
+     "pnl": -8760.0
     },
     {
-     "price": 1625.25,
-     "pnl": -8880.0
+     "price": 1763.15,
+     "pnl": -8760.0
     },
     {
-     "price": 1650.0,
-     "pnl": -2880.0
+     "price": 1790.0,
+     "pnl": -2760.0
     },
     {
-     "price": 1674.75,
-     "pnl": 11970.0
+     "price": 1816.85,
+     "pnl": 13350.0
     },
     {
-     "price": 1699.5,
-     "pnl": 15120.0
+     "price": 1843.7,
+     "pnl": 15240.0
     },
     {
-     "price": 1724.25,
-     "pnl": 15120.0
+     "price": 1870.55,
+     "pnl": 15240.0
     },
     {
-     "price": 1749.0,
-     "pnl": 15120.0
+     "price": 1897.4,
+     "pnl": 15240.0
     },
     {
-     "price": 1773.75,
-     "pnl": 15120.0
+     "price": 1924.25,
+     "pnl": 15240.0
     },
     {
-     "price": 1798.5,
-     "pnl": 15120.0
+     "price": 1951.1,
+     "pnl": 15240.0
     },
     {
-     "price": 1823.25,
-     "pnl": 15120.0
+     "price": 1977.95,
+     "pnl": 15240.0
     },
     {
-     "price": 1848.0,
-     "pnl": 15120.0
+     "price": 2004.8,
+     "pnl": 15240.0
     },
     {
-     "price": 1872.75,
-     "pnl": 15120.0
+     "price": 2031.65,
+     "pnl": 15240.0
     },
     {
-     "price": 1897.5,
-     "pnl": 15120.0
+     "price": 2058.5,
+     "pnl": 15240.0
     }
    ],
-   "thesis": "TECHM needs to close above 1654.8 by 27-Oct-2026 (11 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: ~47% (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 8,880 -- you can lose 100% of the amount paid for this position.",
+   "thesis": "TECHM needs to close above 1794.6 by 27-Oct-2026 (10 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: ~46% (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 8,760 -- you can lose 100% of the amount paid for this position.",
    "chain": {
-    "pcr": 0.67,
-    "atm_iv": 33.0,
+    "pcr": 1.17,
+    "atm_iv": 27.4,
     "ivr": null,
-    "max_pain": 1540.0,
-    "expected_move_pct": 5.7,
-    "straddle_prem": 79.2,
-    "total_oi": 20464800,
-    "d_oi_total": 10128,
+    "max_pain": 1680.0,
+    "expected_move_pct": 4.5,
+    "straddle_prem": 68.6,
+    "total_oi": 29495400,
+    "d_oi_total": 15060,
     "reasons": [
-     "PCR 0.67 < 0.7 (put writers active / bullish tone)",
-     "OI building +10,128 while price rising (fresh longs)",
-     "Spot above max pain 1540.0 (gravity pulls up)"
+     "Underlying in uptrend (EMA21 > EMA50)",
+     "PCR 1.17 elevated (call selling pressure)",
+     "OI building +15,060 while price rising (fresh longs)",
+     "Spot above max pain 1680.0 (gravity pulls up)"
+    ]
+   }
+  },
+  {
+   "symbol": "INDHOTEL",
+   "score": 87.0,
+   "direction": "CE",
+   "spot": 772.1,
+   "expiry": "27-Oct-2026",
+   "dte": 10,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 770.0,
+     "premium": 15.75
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 790.0,
+     "premium": 8.0
+    }
+   ],
+   "cost": 7750.0,
+   "max_loss": 7750.0,
+   "max_profit": 12250.0,
+   "breakeven": 777.75,
+   "probability": 0.4240635035795542,
+   "lot_size": 1000,
+   "payoff": [
+    {
+     "price": 656.28,
+     "pnl": -7750.0
+    },
+    {
+     "price": 667.87,
+     "pnl": -7750.0
+    },
+    {
+     "price": 679.45,
+     "pnl": -7750.0
+    },
+    {
+     "price": 691.03,
+     "pnl": -7750.0
+    },
+    {
+     "price": 702.61,
+     "pnl": -7750.0
+    },
+    {
+     "price": 714.19,
+     "pnl": -7750.0
+    },
+    {
+     "price": 725.77,
+     "pnl": -7750.0
+    },
+    {
+     "price": 737.36,
+     "pnl": -7750.0
+    },
+    {
+     "price": 748.94,
+     "pnl": -7750.0
+    },
+    {
+     "price": 760.52,
+     "pnl": -7750.0
+    },
+    {
+     "price": 772.1,
+     "pnl": -5650.0
+    },
+    {
+     "price": 783.68,
+     "pnl": 5931.5
+    },
+    {
+     "price": 795.26,
+     "pnl": 12250.0
+    },
+    {
+     "price": 806.84,
+     "pnl": 12250.0
+    },
+    {
+     "price": 818.43,
+     "pnl": 12250.0
+    },
+    {
+     "price": 830.01,
+     "pnl": 12250.0
+    },
+    {
+     "price": 841.59,
+     "pnl": 12250.0
+    },
+    {
+     "price": 853.17,
+     "pnl": 12250.0
+    },
+    {
+     "price": 864.75,
+     "pnl": 12250.0
+    },
+    {
+     "price": 876.33,
+     "pnl": 12250.0
+    },
+    {
+     "price": 887.91,
+     "pnl": 12250.0
+    }
+   ],
+   "thesis": "INDHOTEL needs to close above 777.75 by 27-Oct-2026 (10 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: ~42% (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 7,750 -- you can lose 100% of the amount paid for this position.",
+   "chain": {
+    "pcr": 0.78,
+    "atm_iv": 27.5,
+    "ivr": null,
+    "max_pain": 740.0,
+    "expected_move_pct": 4.5,
+    "straddle_prem": 29.45,
+    "total_oi": 11570000,
+    "d_oi_total": 1644,
+    "reasons": [
+     "Underlying in uptrend (EMA21 > EMA50)",
+     "OI building +1,644 while price rising (fresh longs)",
+     "Spot above max pain 740.0 (gravity pulls up)"
     ]
    }
   },
@@ -135,519 +267,320 @@
    "symbol": "HAL",
    "score": 75.0,
    "direction": "CE",
-   "spot": 4910.0,
+   "spot": 4989.0,
    "expiry": "27-Oct-2026",
-   "dte": 11,
+   "dte": 10,
    "strategy": "debit_spread",
    "legs": [
     {
      "action": "BUY",
      "side": "CE",
-     "strike": 4900.0,
-     "premium": 88.0
+     "strike": 5000.0,
+     "premium": 61.15
     },
     {
      "action": "SELL",
      "side": "CE",
-     "strike": 5000.0,
-     "premium": 44.5
+     "strike": 5100.0,
+     "premium": 27.85
     }
    ],
-   "cost": 6525.0,
-   "max_loss": 6525.0,
-   "max_profit": 8475.0,
-   "breakeven": 4943.5,
-   "probability": 0.4210293804955793,
+   "cost": 4995.0,
+   "max_loss": 4995.0,
+   "max_profit": 10005.0,
+   "breakeven": 5033.3,
+   "probability": 0.3762804324617167,
    "lot_size": 150,
    "payoff": [
     {
-     "price": 4173.5,
-     "pnl": -6525.0
+     "price": 4240.65,
+     "pnl": -4995.0
     },
     {
-     "price": 4247.15,
-     "pnl": -6525.0
+     "price": 4315.48,
+     "pnl": -4995.0
     },
     {
-     "price": 4320.8,
-     "pnl": -6525.0
+     "price": 4390.32,
+     "pnl": -4995.0
     },
     {
-     "price": 4394.45,
-     "pnl": -6525.0
+     "price": 4465.15,
+     "pnl": -4995.0
     },
     {
-     "price": 4468.1,
-     "pnl": -6525.0
+     "price": 4539.99,
+     "pnl": -4995.0
     },
     {
-     "price": 4541.75,
-     "pnl": -6525.0
+     "price": 4614.82,
+     "pnl": -4995.0
     },
     {
-     "price": 4615.4,
-     "pnl": -6525.0
+     "price": 4689.66,
+     "pnl": -4995.0
     },
     {
-     "price": 4689.05,
-     "pnl": -6525.0
+     "price": 4764.49,
+     "pnl": -4995.0
     },
     {
-     "price": 4762.7,
-     "pnl": -6525.0
+     "price": 4839.33,
+     "pnl": -4995.0
     },
     {
-     "price": 4836.35,
-     "pnl": -6525.0
+     "price": 4914.16,
+     "pnl": -4995.0
     },
     {
-     "price": 4910.0,
-     "pnl": -5025.0
+     "price": 4989.0,
+     "pnl": -4995.0
     },
     {
-     "price": 4983.65,
-     "pnl": 6022.5
+     "price": 5063.83,
+     "pnl": 4580.25
     },
     {
-     "price": 5057.3,
-     "pnl": 8475.0
+     "price": 5138.67,
+     "pnl": 10005.0
     },
     {
-     "price": 5130.95,
-     "pnl": 8475.0
+     "price": 5213.5,
+     "pnl": 10005.0
     },
     {
-     "price": 5204.6,
-     "pnl": 8475.0
+     "price": 5288.34,
+     "pnl": 10005.0
     },
     {
-     "price": 5278.25,
-     "pnl": 8475.0
+     "price": 5363.17,
+     "pnl": 10005.0
     },
     {
-     "price": 5351.9,
-     "pnl": 8475.0
+     "price": 5438.01,
+     "pnl": 10005.0
     },
     {
-     "price": 5425.55,
-     "pnl": 8475.0
+     "price": 5512.84,
+     "pnl": 10005.0
     },
     {
-     "price": 5499.2,
-     "pnl": 8475.0
+     "price": 5587.68,
+     "pnl": 10005.0
     },
     {
-     "price": 5572.85,
-     "pnl": 8475.0
+     "price": 5662.51,
+     "pnl": 10005.0
     },
     {
-     "price": 5646.5,
-     "pnl": 8475.0
+     "price": 5737.35,
+     "pnl": 10005.0
     }
    ],
-   "thesis": "HAL needs to close above 4943.5 by 27-Oct-2026 (11 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: ~42% (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 6,525 -- you can lose 100% of the amount paid for this position.",
+   "thesis": "HAL needs to close above 5033.3 by 27-Oct-2026 (10 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: ~38% (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 4,995 -- you can lose 100% of the amount paid for this position.",
    "chain": {
-    "pcr": 0.91,
-    "atm_iv": 22.6,
+    "pcr": 0.98,
+    "atm_iv": 21.4,
     "ivr": null,
     "max_pain": 4800.0,
-    "expected_move_pct": 3.9,
-    "straddle_prem": 160.75,
-    "total_oi": 4011000,
-    "d_oi_total": -870,
+    "expected_move_pct": 3.5,
+    "straddle_prem": 147.95,
+    "total_oi": 3986100,
+    "d_oi_total": -298,
     "reasons": [
      "Underlying in uptrend (EMA21 > EMA50)",
-     "OI change -870",
+     "OI change -298",
      "Spot above max pain 4800.0 (gravity pulls up)"
     ]
    }
   },
   {
-   "symbol": "ICICIBANK",
-   "score": 68.0,
-   "direction": "CE",
-   "spot": 1389.4,
-   "expiry": "27-Oct-2026",
-   "dte": 11,
-   "strategy": "debit_spread",
-   "legs": [
-    {
-     "action": "BUY",
-     "side": "CE",
-     "strike": 1390.0,
-     "premium": 20.8
-    },
-    {
-     "action": "SELL",
-     "side": "CE",
-     "strike": 1410.0,
-     "premium": 12.65
-    }
-   ],
-   "cost": 5705.0,
-   "max_loss": 5705.0,
-   "max_profit": 8295.0,
-   "breakeven": 1398.15,
-   "probability": 0.4194708040087804,
-   "lot_size": 700,
-   "payoff": [
-    {
-     "price": 1180.99,
-     "pnl": -5705.0
-    },
-    {
-     "price": 1201.83,
-     "pnl": -5705.0
-    },
-    {
-     "price": 1222.67,
-     "pnl": -5705.0
-    },
-    {
-     "price": 1243.51,
-     "pnl": -5705.0
-    },
-    {
-     "price": 1264.35,
-     "pnl": -5705.0
-    },
-    {
-     "price": 1285.19,
-     "pnl": -5705.0
-    },
-    {
-     "price": 1306.04,
-     "pnl": -5705.0
-    },
-    {
-     "price": 1326.88,
-     "pnl": -5705.0
-    },
-    {
-     "price": 1347.72,
-     "pnl": -5705.0
-    },
-    {
-     "price": 1368.56,
-     "pnl": -5705.0
-    },
-    {
-     "price": 1389.4,
-     "pnl": -5705.0
-    },
-    {
-     "price": 1410.24,
-     "pnl": 8295.0
-    },
-    {
-     "price": 1431.08,
-     "pnl": 8295.0
-    },
-    {
-     "price": 1451.92,
-     "pnl": 8295.0
-    },
-    {
-     "price": 1472.76,
-     "pnl": 8295.0
-    },
-    {
-     "price": 1493.61,
-     "pnl": 8295.0
-    },
-    {
-     "price": 1514.45,
-     "pnl": 8295.0
-    },
-    {
-     "price": 1535.29,
-     "pnl": 8295.0
-    },
-    {
-     "price": 1556.13,
-     "pnl": 8295.0
-    },
-    {
-     "price": 1576.97,
-     "pnl": 8295.0
-    },
-    {
-     "price": 1597.81,
-     "pnl": 8295.0
-    }
-   ],
-   "thesis": "ICICIBANK needs to close above 1398.15 by 27-Oct-2026 (11 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: ~42% (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 5,705 -- you can lose 100% of the amount paid for this position.",
-   "chain": {
-    "pcr": 0.69,
-    "atm_iv": 22.0,
-    "ivr": null,
-    "max_pain": 1350.0,
-    "expected_move_pct": 3.8,
-    "straddle_prem": 44.3,
-    "total_oi": 52693900,
-    "d_oi_total": -1295,
-    "reasons": [
-     "PCR 0.69 < 0.7 (put writers active / bullish tone)",
-     "OI change -1,295",
-     "Spot above max pain 1350.0 (gravity pulls up)"
-    ]
-   }
-  },
-  {
-   "symbol": "KOTAKBANK",
+   "symbol": "NYKAA",
    "score": 92.0,
    "direction": "CE",
-   "spot": 447.95,
+   "spot": 345.0,
    "expiry": "27-Oct-2026",
-   "dte": 11,
-   "strategy": "debit_spread",
+   "dte": 10,
+   "strategy": "long",
    "legs": [
     {
      "action": "BUY",
      "side": "CE",
-     "strike": 450.0,
-     "premium": 5.8
-    },
-    {
-     "action": "SELL",
-     "side": "CE",
-     "strike": 460.0,
-     "premium": 2.75
+     "strike": 355.0,
+     "premium": 2.4
     }
    ],
-   "cost": 6100.0,
-   "max_loss": 6100.0,
-   "max_profit": 13900.0,
-   "breakeven": 453.05,
-   "probability": 0.3621729065600372,
-   "lot_size": 2000,
+   "cost": 7500.0,
+   "max_loss": 7500.0,
+   "max_profit": null,
+   "breakeven": 357.4,
+   "probability": 0.18524336229747596,
+   "lot_size": 3125,
    "payoff": [
     {
-     "price": 380.76,
-     "pnl": -6100.0
+     "price": 293.25,
+     "pnl": -7500.0
     },
     {
-     "price": 387.48,
-     "pnl": -6100.0
+     "price": 298.43,
+     "pnl": -7500.0
     },
     {
-     "price": 394.2,
-     "pnl": -6100.0
+     "price": 303.6,
+     "pnl": -7500.0
     },
     {
-     "price": 400.92,
-     "pnl": -6100.0
+     "price": 308.77,
+     "pnl": -7500.0
     },
     {
-     "price": 407.63,
-     "pnl": -6100.0
+     "price": 313.95,
+     "pnl": -7500.0
     },
     {
-     "price": 414.35,
-     "pnl": -6100.0
+     "price": 319.12,
+     "pnl": -7500.0
     },
     {
-     "price": 421.07,
-     "pnl": -6100.0
+     "price": 324.3,
+     "pnl": -7500.0
     },
     {
-     "price": 427.79,
-     "pnl": -6100.0
+     "price": 329.47,
+     "pnl": -7500.0
     },
     {
-     "price": 434.51,
-     "pnl": -6100.0
+     "price": 334.65,
+     "pnl": -7500.0
     },
     {
-     "price": 441.23,
-     "pnl": -6100.0
+     "price": 339.82,
+     "pnl": -7500.0
     },
     {
-     "price": 447.95,
-     "pnl": -6100.0
+     "price": 345.0,
+     "pnl": -7500.0
     },
     {
-     "price": 454.67,
-     "pnl": 3238.5
+     "price": 350.17,
+     "pnl": -7500.0
     },
     {
-     "price": 461.39,
-     "pnl": 13900.0
+     "price": 355.35,
+     "pnl": -6406.25
     },
     {
-     "price": 468.11,
-     "pnl": 13900.0
+     "price": 360.52,
+     "pnl": 9765.62
     },
     {
-     "price": 474.83,
-     "pnl": 13900.0
+     "price": 365.7,
+     "pnl": 25937.5
     },
     {
-     "price": 481.55,
-     "pnl": 13900.0
+     "price": 370.87,
+     "pnl": 42109.37
     },
     {
-     "price": 488.27,
-     "pnl": 13900.0
+     "price": 376.05,
+     "pnl": 58281.25
     },
     {
-     "price": 494.98,
-     "pnl": 13900.0
+     "price": 381.22,
+     "pnl": 74453.12
     },
     {
-     "price": 501.7,
-     "pnl": 13900.0
+     "price": 386.4,
+     "pnl": 90625.0
     },
     {
-     "price": 508.42,
-     "pnl": 13900.0
+     "price": 391.57,
+     "pnl": 106796.87
     },
     {
-     "price": 515.14,
-     "pnl": 13900.0
+     "price": 396.75,
+     "pnl": 122968.75
     }
    ],
-   "thesis": "KOTAKBANK needs to close above 453.05 by 27-Oct-2026 (11 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: ~36% (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 6,100 -- you can lose 100% of the amount paid for this position.",
+   "thesis": "NYKAA needs to close above 357.4 by 27-Oct-2026 (10 trading days away) for this long CE to profit. Modeled probability of finishing there: ~19% (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 7,500 -- you can lose 100% of the amount paid for this position.",
    "chain": {
-    "pcr": 0.7,
-    "atm_iv": 25.6,
+    "pcr": 0.61,
+    "atm_iv": 24.1,
     "ivr": null,
-    "max_pain": 430.0,
-    "expected_move_pct": 4.4,
-    "straddle_prem": 16.6,
-    "total_oi": 127834000,
-    "d_oi_total": 840,
+    "max_pain": 340.0,
+    "expected_move_pct": 4.0,
+    "straddle_prem": 11.5,
+    "total_oi": 23662500,
+    "d_oi_total": 28,
     "reasons": [
      "Underlying in uptrend (EMA21 > EMA50)",
-     "PCR 0.70 < 0.7 (put writers active / bullish tone)",
-     "OI building +840 while price rising (fresh longs)",
-     "Spot above max pain 430.0 (gravity pulls up)"
+     "PCR 0.61 < 0.7 (put writers active / bullish tone)",
+     "OI building +28 while price rising (fresh longs)",
+     "Spot above max pain 340.0 (gravity pulls up)"
     ]
    }
   }
  ],
  "vetoed_capacity": [
   {
-   "symbol": "ANGELONE",
-   "score": 80.0,
+   "symbol": "BHARTIARTL",
+   "score": 75.0,
    "direction": "CE",
-   "spot": 313.0,
+   "spot": 1905.0,
    "expiry": "27-Oct-2026",
-   "dte": 11,
+   "dte": 10,
    "strategy": "debit_spread",
    "legs": [
     {
      "action": "BUY",
      "side": "CE",
-     "strike": 315.0,
-     "premium": 8.65
+     "strike": 1900.0,
+     "premium": 18.5
     },
     {
      "action": "SELL",
-     "side": "CE",
-     "strike": 325.0,
-     "premium": 5.15
-    }
-   ],
-   "cost": 8750.0,
-   "max_loss": 8750.0,
-   "max_profit": 16250.0,
-   "breakeven": 318.5,
-   "probability": 0.3894971518126361,
-   "lot_size": 2500,
-   "veto_rule": "max_open_ideas",
-   "veto_detail": "10 open ideas already at the 10 cap"
-  },
-  {
-   "symbol": "PERSISTENT",
-   "score": 87.0,
-   "direction": "CE",
-   "spot": 5840.0,
-   "expiry": "27-Oct-2026",
-   "dte": 11,
-   "strategy": "debit_spread",
-   "legs": [
-    {
-     "action": "BUY",
-     "side": "CE",
-     "strike": 5800.0,
-     "premium": 174.9
-    },
-    {
-     "action": "SELL",
-     "side": "CE",
-     "strike": 6000.0,
-     "premium": 101.0
-    }
-   ],
-   "cost": 9237.5,
-   "max_loss": 9237.5,
-   "max_profit": 15762.5,
-   "breakeven": 5873.9,
-   "probability": 0.4499346899742178,
-   "lot_size": 125,
-   "veto_rule": "max_open_ideas",
-   "veto_detail": "10 open ideas already at the 10 cap"
-  },
-  {
-   "symbol": "INDHOTEL",
-   "score": 87.0,
-   "direction": "CE",
-   "spot": 741.45,
-   "expiry": "27-Oct-2026",
-   "dte": 11,
-   "strategy": "debit_spread",
-   "legs": [
-    {
-     "action": "BUY",
-     "side": "CE",
-     "strike": 740.0,
-     "premium": 17.35
-    },
-    {
-     "action": "SELL",
-     "side": "CE",
-     "strike": 760.0,
-     "premium": 8.45
-    }
-   ],
-   "cost": 8900.0,
-   "max_loss": 8900.0,
-   "max_profit": 11100.0,
-   "breakeven": 748.9,
-   "probability": 0.4123431452797861,
-   "lot_size": 1000,
-   "veto_rule": "max_open_ideas",
-   "veto_detail": "10 open ideas already at the 10 cap"
-  },
-  {
-   "symbol": "COFORGE",
-   "score": 87.0,
-   "direction": "CE",
-   "spot": 1934.3,
-   "expiry": "27-Oct-2026",
-   "dte": 11,
-   "strategy": "debit_spread",
-   "legs": [
-    {
-     "action": "BUY",
      "side": "CE",
      "strike": 1940.0,
-     "premium": 56.35
+     "premium": 7.2
+    }
+   ],
+   "cost": 5367.5,
+   "max_loss": 5367.5,
+   "max_profit": 13632.5,
+   "breakeven": 1911.3,
+   "probability": 0.4197459130756529,
+   "lot_size": 475,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "KOTAKBANK",
+   "score": 75.0,
+   "direction": "CE",
+   "spot": 447.4,
+   "expiry": "27-Oct-2026",
+   "dte": 10,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 445.0,
+     "premium": 8.85
     },
     {
      "action": "SELL",
      "side": "CE",
-     "strike": 1980.0,
-     "premium": 38.75
+     "strike": 455.0,
+     "premium": 4.65
     }
    ],
-   "cost": 8360.0,
-   "max_loss": 8360.0,
-   "max_profit": 10640.0,
-   "breakeven": 1957.6,
-   "probability": 0.41889203661789526,
-   "lot_size": 475,
+   "cost": 8400.0,
+   "max_loss": 8400.0,
+   "max_profit": 11600.0,
+   "breakeven": 449.2,
+   "probability": 0.4502937271768344,
+   "lot_size": 2000,
    "veto_rule": "max_open_ideas",
    "veto_detail": "10 open ideas already at the 10 cap"
   },
@@ -655,223 +588,303 @@
    "symbol": "LAURUSLABS",
    "score": 80.0,
    "direction": "CE",
-   "spot": 2018.5,
+   "spot": 2060.1,
    "expiry": "27-Oct-2026",
-   "dte": 11,
+   "dte": 10,
    "strategy": "long",
    "legs": [
     {
      "action": "BUY",
      "side": "CE",
      "strike": 2140.0,
-     "premium": 8.3
+     "premium": 10.2
     }
    ],
-   "cost": 7055.0,
-   "max_loss": 7055.0,
+   "cost": 8670.0,
+   "max_loss": 8670.0,
    "max_profit": null,
-   "breakeven": 2148.3,
-   "probability": 0.10612241176232967,
+   "breakeven": 2150.2,
+   "probability": 0.14381641043168164,
    "lot_size": 850,
    "veto_rule": "max_open_ideas",
    "veto_detail": "10 open ideas already at the 10 cap"
   },
   {
-   "symbol": "MOTILALOFS",
-   "score": 92.0,
+   "symbol": "FEDERALBNK",
+   "score": 75.0,
    "direction": "CE",
-   "spot": 1062.95,
+   "spot": 338.0,
    "expiry": "27-Oct-2026",
-   "dte": 11,
-   "strategy": "long",
-   "legs": [
-    {
-     "action": "BUY",
-     "side": "CE",
-     "strike": 1140.0,
-     "premium": 6.4
-    }
-   ],
-   "cost": 4960.0,
-   "max_loss": 4960.0,
-   "max_profit": null,
-   "breakeven": 1146.4,
-   "probability": 0.11768628305282292,
-   "lot_size": 775,
-   "veto_rule": "max_open_ideas",
-   "veto_detail": "10 open ideas already at the 10 cap"
-  },
-  {
-   "symbol": "PNBHOUSING",
-   "score": 80.0,
-   "direction": "CE",
-   "spot": 1183.9,
-   "expiry": "27-Oct-2026",
-   "dte": 11,
-   "strategy": "long",
-   "legs": [
-    {
-     "action": "BUY",
-     "side": "CE",
-     "strike": 1220.0,
-     "premium": 12.55
-    }
-   ],
-   "cost": 8157.5,
-   "max_loss": 8157.5,
-   "max_profit": null,
-   "breakeven": 1232.55,
-   "probability": 0.21060877784112858,
-   "lot_size": 650,
-   "veto_rule": "max_open_ideas",
-   "veto_detail": "10 open ideas already at the 10 cap"
-  },
-  {
-   "symbol": "NYKAA",
-   "score": 80.0,
-   "direction": "CE",
-   "spot": 338.4,
-   "expiry": "27-Oct-2026",
-   "dte": 11,
+   "dte": 10,
    "strategy": "debit_spread",
    "legs": [
     {
      "action": "BUY",
      "side": "CE",
      "strike": 340.0,
-     "premium": 5.35
+     "premium": 5.25
     },
     {
      "action": "SELL",
      "side": "CE",
      "strike": 350.0,
-     "premium": 2.25
+     "premium": 2.0
     }
    ],
-   "cost": 9687.5,
-   "max_loss": 9687.5,
-   "max_profit": 21562.5,
-   "breakeven": 343.1,
-   "probability": 0.35967935113526806,
-   "lot_size": 3125,
+   "cost": 8125.0,
+   "max_loss": 8125.0,
+   "max_profit": 16875.0,
+   "breakeven": 343.25,
+   "probability": 0.36615257574238236,
+   "lot_size": 2500,
    "veto_rule": "max_open_ideas",
    "veto_detail": "10 open ideas already at the 10 cap"
   },
   {
-   "symbol": "PETRONET",
-   "score": 92.0,
-   "direction": "CE",
-   "spot": 295.2,
-   "expiry": "27-Oct-2026",
-   "dte": 11,
-   "strategy": "debit_spread",
-   "legs": [
-    {
-     "action": "BUY",
-     "side": "CE",
-     "strike": 295.0,
-     "premium": 4.65
-    },
-    {
-     "action": "SELL",
-     "side": "CE",
-     "strike": 305.0,
-     "premium": 1.2
-    }
-   ],
-   "cost": 6555.0,
-   "max_loss": 6555.0,
-   "max_profit": 12445.0,
-   "breakeven": 298.45,
-   "probability": 0.36790147795366523,
-   "lot_size": 1900,
-   "veto_rule": "max_open_ideas",
-   "veto_detail": "10 open ideas already at the 10 cap"
-  },
-  {
-   "symbol": "BAJAJHLDNG",
-   "score": 75.0,
-   "direction": "CE",
-   "spot": 11225.0,
-   "expiry": "27-Oct-2026",
-   "dte": 11,
-   "strategy": "long",
-   "legs": [
-    {
-     "action": "BUY",
-     "side": "CE",
-     "strike": 11600.0,
-     "premium": 94.35
-    }
-   ],
-   "cost": 7076.25,
-   "max_loss": 7076.25,
-   "max_profit": null,
-   "breakeven": 11694.35,
-   "probability": 0.19676697853433456,
-   "lot_size": 75,
-   "veto_rule": "max_open_ideas",
-   "veto_detail": "10 open ideas already at the 10 cap"
-  },
-  {
-   "symbol": "AXISBANK",
+   "symbol": "ICICIBANK",
    "score": 80.0,
    "direction": "CE",
-   "spot": 1288.0,
+   "spot": 1397.0,
    "expiry": "27-Oct-2026",
-   "dte": 11,
+   "dte": 10,
    "strategy": "debit_spread",
    "legs": [
     {
      "action": "BUY",
      "side": "CE",
-     "strike": 1290.0,
-     "premium": 23.9
+     "strike": 1400.0,
+     "premium": 19.3
     },
     {
      "action": "SELL",
      "side": "CE",
-     "strike": 1310.0,
-     "premium": 14.9
+     "strike": 1420.0,
+     "premium": 11.95
     }
    ],
-   "cost": 5625.0,
-   "max_loss": 5625.0,
-   "max_profit": 6875.0,
-   "breakeven": 1299.0,
-   "probability": 0.41428344314712506,
-   "lot_size": 625,
+   "cost": 5145.0,
+   "max_loss": 5145.0,
+   "max_profit": 8855.0,
+   "breakeven": 1407.35,
+   "probability": 0.4052682562310548,
+   "lot_size": 700,
    "veto_rule": "max_open_ideas",
    "veto_detail": "10 open ideas already at the 10 cap"
   },
   {
-   "symbol": "BHEL",
-   "score": 82.0,
+   "symbol": "PERSISTENT",
+   "score": 68.0,
    "direction": "CE",
-   "spot": 434.25,
+   "spot": 5741.0,
    "expiry": "27-Oct-2026",
-   "dte": 11,
+   "dte": 10,
    "strategy": "debit_spread",
    "legs": [
     {
      "action": "BUY",
      "side": "CE",
-     "strike": 435.0,
-     "premium": 9.7
+     "strike": 5700.0,
+     "premium": 104.3
     },
     {
      "action": "SELL",
      "side": "CE",
-     "strike": 445.0,
-     "premium": 5.9
+     "strike": 5900.0,
+     "premium": 45.25
     }
    ],
-   "cost": 9975.0,
-   "max_loss": 9975.0,
-   "max_profit": 16275.0,
-   "breakeven": 438.8,
-   "probability": 0.4116596890760227,
-   "lot_size": 2625,
+   "cost": 7381.25,
+   "max_loss": 7381.25,
+   "max_profit": 17618.75,
+   "breakeven": 5759.05,
+   "probability": 0.4538672952665223,
+   "lot_size": 125,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "COFORGE",
+   "score": 75.0,
+   "direction": "CE",
+   "spot": 1951.9,
+   "expiry": "27-Oct-2026",
+   "dte": 10,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 1960.0,
+     "premium": 51.15
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 2000.0,
+     "premium": 35.0
+    }
+   ],
+   "cost": 7671.25,
+   "max_loss": 7671.25,
+   "max_profit": 11328.75,
+   "breakeven": 1976.15,
+   "probability": 0.41197895811199126,
+   "lot_size": 475,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "MOTILALOFS",
+   "score": 80.0,
+   "direction": "CE",
+   "spot": 1057.6,
+   "expiry": "27-Oct-2026",
+   "dte": 10,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 1060.0,
+     "premium": 22.5
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 1100.0,
+     "premium": 10.15
+    }
+   ],
+   "cost": 9571.25,
+   "max_loss": 9571.25,
+   "max_profit": 21428.75,
+   "breakeven": 1072.35,
+   "probability": 0.3832907096484952,
+   "lot_size": 775,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "DLF",
+   "score": 87.0,
+   "direction": "CE",
+   "spot": 675.0,
+   "expiry": "27-Oct-2026",
+   "dte": 10,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 670.0,
+     "premium": 17.35
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 690.0,
+     "premium": 8.5
+    }
+   ],
+   "cost": 8407.5,
+   "max_loss": 8407.5,
+   "max_profit": 10592.5,
+   "breakeven": 678.85,
+   "probability": 0.4444858840117146,
+   "lot_size": 950,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "MPHASIS",
+   "score": 75.0,
+   "direction": "CE",
+   "spot": 2500.0,
+   "expiry": "27-Oct-2026",
+   "dte": 10,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 2500.0,
+     "premium": 53.0
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 2600.0,
+     "premium": 17.3
+    }
+   ],
+   "cost": 9817.5,
+   "max_loss": 9817.5,
+   "max_profit": 17682.5,
+   "breakeven": 2535.7,
+   "probability": 0.3751043326497664,
+   "lot_size": 275,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "HCLTECH",
+   "score": 72.0,
+   "direction": "CE",
+   "spot": 1380.0,
+   "expiry": "27-Oct-2026",
+   "dte": 10,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 1380.0,
+     "premium": 23.7
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 1420.0,
+     "premium": 9.5
+    }
+   ],
+   "cost": 5680.0,
+   "max_loss": 5680.0,
+   "max_profit": 10320.0,
+   "breakeven": 1394.2,
+   "probability": 0.3878450891615842,
+   "lot_size": 400,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "INDIANB",
+   "score": 68.0,
+   "direction": "CE",
+   "spot": 854.1,
+   "expiry": "27-Oct-2026",
+   "dte": 10,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 850.0,
+     "premium": 17.4
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 870.0,
+     "premium": 8.0
+    }
+   ],
+   "cost": 9400.0,
+   "max_loss": 9400.0,
+   "max_profit": 10600.0,
+   "breakeven": 859.4,
+   "probability": 0.4307931997264888,
+   "lot_size": 1000,
    "veto_rule": "max_open_ideas",
    "veto_detail": "10 open ideas already at the 10 cap"
   }
