@@ -1,12 +1,12 @@
 {
- "generated": "2026-10-19T19:17:11",
- "date": "19 Oct 2026",
+ "generated": "2026-10-20T18:01:51",
+ "date": "20 Oct 2026",
  "provider": "smartapi",
  "universe_size": 210,
  "delivery_picks": 6,
  "option_picks": 4,
  "scorecard_rows": 282,
- "build_seconds": 800.1,
+ "build_seconds": 802.6,
  "scored_rows": 210,
  "coverage_pct": 1.0,
  "risk_gate": {
