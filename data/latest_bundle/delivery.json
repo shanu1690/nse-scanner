@@ -2,215 +2,162 @@
  "style": "fade",
  "picks": [
   {
-   "symbol": "AXISBANK",
+   "symbol": "ANGELONE",
    "score": 90.0,
-   "entry": 1217.5,
-   "stop": 1175.27,
-   "target1": 1245.65,
-   "target2": 1273.81,
+   "entry": 292.45,
+   "stop": 276.1,
+   "target1": 303.35,
+   "target2": 314.25,
    "reasons": [
     "Below EMA50 - washed out",
-    "14% below 52-week high - beaten down",
-    "RSI 43 low - oversold region",
+    "19% below 52-week high - beaten down",
     "Negative 5d/20d momentum",
+    "Still beating NIFTY by 5.1% over 20d",
     "Relative strength vs NIFTY positive (only factor with real edge)"
    ],
-   "position_size": 23,
-   "rupee_risk": 971.29,
-   "risk_pct_of_capital": 0.971,
+   "position_size": 61,
+   "rupee_risk": 997.35,
+   "risk_pct_of_capital": 0.997,
    "reward_risk": 1.33,
    "sector": "Financial Services"
   },
   {
    "symbol": "ICICIGI",
    "score": 90.0,
-   "entry": 1592.0,
-   "stop": 1519.4,
-   "target1": 1640.4,
-   "target2": 1688.8,
+   "entry": 1583.8,
+   "stop": 1516.78,
+   "target1": 1628.48,
+   "target2": 1673.15,
    "reasons": [
     "Below EMA50 - washed out",
     "23% below 52-week high - beaten down",
     "Negative 5d/20d momentum",
-    "Still beating NIFTY by 9.7% over 20d",
+    "Still beating NIFTY by 3.2% over 20d",
     "Relative strength vs NIFTY positive (only factor with real edge)"
    ],
-   "position_size": 13,
-   "rupee_risk": 943.8,
-   "risk_pct_of_capital": 0.944,
+   "position_size": 14,
+   "rupee_risk": 938.28,
+   "risk_pct_of_capital": 0.938,
    "reward_risk": 1.33,
    "sector": "Financial Services"
   },
   {
-   "symbol": "PATANJALI",
-   "score": 87.0,
-   "entry": 349.75,
-   "stop": 333.33,
-   "target1": 360.7,
-   "target2": 371.64,
-   "reasons": [
-    "Below EMA50 - washed out",
-    "43% below 52-week high - beaten down",
-    "RSI 40 low - oversold region",
-    "Negative 5d/20d momentum",
-    "Relative strength vs NIFTY positive (only factor with real edge)"
-   ],
-   "position_size": 60,
-   "rupee_risk": 985.2,
-   "risk_pct_of_capital": 0.985,
-   "reward_risk": 1.33,
-   "sector": "Fast Moving Consumer Goods"
-  },
-  {
-   "symbol": "SUPREMEIND",
-   "score": 87.0,
-   "entry": 3390.0,
-   "stop": 3240.73,
-   "target1": 3489.51,
-   "target2": 3589.02,
-   "reasons": [
-    "Below EMA50 - washed out",
-    "21% below 52-week high - beaten down",
-    "RSI 42 low - oversold region",
-    "Negative 5d/20d momentum",
-    "Relative strength vs NIFTY positive (only factor with real edge)"
-   ],
-   "position_size": 6,
-   "rupee_risk": 895.62,
-   "risk_pct_of_capital": 0.896,
-   "reward_risk": 1.33,
-   "sector": "Capital Goods"
-  },
-  {
-   "symbol": "ZYDUSLIFE",
-   "score": 86.0,
-   "entry": 1129.4,
-   "stop": 1084.07,
-   "target1": 1159.62,
-   "target2": 1189.84,
+   "symbol": "PNBHOUSING",
+   "score": 90.0,
+   "entry": 1122.0,
+   "stop": 1069.13,
+   "target1": 1157.25,
+   "target2": 1192.49,
    "reasons": [
     "Below EMA50 - washed out",
     "8% below 52-week high - beaten down",
     "Negative 5d/20d momentum",
+    "Still beating NIFTY by 3.8% over 20d",
     "Relative strength vs NIFTY positive (only factor with real edge)"
    ],
-   "position_size": 22,
-   "rupee_risk": 997.26,
-   "risk_pct_of_capital": 0.997,
+   "position_size": 18,
+   "rupee_risk": 951.66,
+   "risk_pct_of_capital": 0.952,
    "reward_risk": 1.33,
-   "sector": "Healthcare"
+   "sector": "Financial Services"
   },
   {
-   "symbol": "BLUESTARCO",
-   "score": 85.0,
-   "entry": 1499.0,
-   "stop": 1425.16,
-   "target1": 1548.23,
-   "target2": 1597.46,
+   "symbol": "AXISBANK",
+   "score": 86.0,
+   "entry": 1220.0,
+   "stop": 1180.05,
+   "target1": 1246.63,
+   "target2": 1273.26,
    "reasons": [
     "Below EMA50 - washed out",
-    "26% below 52-week high - beaten down",
-    "RSI 43 low - oversold region",
+    "14% below 52-week high - beaten down",
+    "Relative strength vs NIFTY positive (only factor with real edge)"
+   ],
+   "position_size": 25,
+   "rupee_risk": 998.75,
+   "risk_pct_of_capital": 0.999,
+   "reward_risk": 1.33,
+   "sector": "Financial Services"
+  },
+  {
+   "symbol": "SOLARINDS",
+   "score": 86.0,
+   "entry": 19240.0,
+   "stop": 18333.87,
+   "target1": 19844.09,
+   "target2": 20448.18,
+   "reasons": [
+    "Below EMA50 - washed out",
+    "15% below 52-week high - beaten down",
     "Negative 5d/20d momentum",
     "Relative strength vs NIFTY positive (only factor with real edge)"
    ],
-   "position_size": 13,
-   "rupee_risk": 959.92,
-   "risk_pct_of_capital": 0.96,
+   "position_size": 1,
+   "rupee_risk": 906.13,
+   "risk_pct_of_capital": 0.906,
    "reward_risk": 1.33,
-   "sector": "Consumer Durables"
+   "sector": "Chemicals"
+  },
+  {
+   "symbol": "360ONE",
+   "score": 84.0,
+   "entry": 991.0,
+   "stop": 945.39,
+   "target1": 1021.41,
+   "target2": 1051.81,
+   "reasons": [
+    "Below EMA50 - washed out",
+    "20% below 52-week high - beaten down",
+    "RSI 36 low - oversold region",
+    "Negative 5d/20d momentum"
+   ],
+   "position_size": 21,
+   "rupee_risk": 957.81,
+   "risk_pct_of_capital": 0.958,
+   "reward_risk": 1.33,
+   "sector": "Financial Services"
   }
  ],
  "vetoed_capacity": [
   {
-   "symbol": "LTM",
-   "score": 85.0,
-   "entry": 4134.0,
-   "stop": 3904.47,
-   "target1": 4287.02,
-   "target2": 4440.04,
-   "reasons": [
-    "Below EMA50 - washed out",
-    "36% below 52-week high - beaten down",
-    "Negative 5d/20d momentum",
-    "Still beating NIFTY by 4.8% over 20d",
-    "Relative strength vs NIFTY positive (only factor with real edge)"
-   ],
-   "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.67%"
-  },
-  {
-   "symbol": "TRENT",
-   "score": 85.0,
-   "entry": 2727.5,
-   "stop": 2613.87,
-   "target1": 2803.26,
-   "target2": 2879.01,
-   "reasons": [
-    "Below EMA50 - washed out",
-    "20% below 52-week high - beaten down",
-    "RSI 41 low - oversold region",
-    "Negative 5d/20d momentum",
-    "Relative strength vs NIFTY positive (only factor with real edge)"
-   ],
-   "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.66%"
-  },
-  {
    "symbol": "BANDHANBNK",
    "score": 84.0,
-   "entry": 149.89,
-   "stop": 139.53,
-   "target1": 156.8,
-   "target2": 163.7,
+   "entry": 155.36,
+   "stop": 144.96,
+   "target1": 162.29,
+   "target2": 169.23,
    "reasons": [
     "Below EMA50 - washed out",
-    "32% below 52-week high - beaten down",
-    "RSI 34 low - oversold region",
+    "30% below 52-week high - beaten down",
+    "RSI 41 low - oversold region",
     "Negative 5d/20d momentum"
    ],
    "veto_rule": "portfolio_heat",
    "veto_detail": "adding this pick would take portfolio heat to 6.75%"
   },
   {
-   "symbol": "BEL",
+   "symbol": "BDL",
    "score": 84.0,
-   "entry": 362.0,
-   "stop": 350.0,
-   "target1": 370.0,
-   "target2": 378.0,
+   "entry": 992.5,
+   "stop": 940.86,
+   "target1": 1026.93,
+   "target2": 1061.35,
    "reasons": [
     "Below EMA50 - washed out",
-    "24% below 52-week high - beaten down",
-    "RSI 31 low - oversold region",
+    "39% below 52-week high - beaten down",
+    "RSI 28 low - oversold region",
     "Negative 5d/20d momentum"
    ],
    "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.75%"
-  },
-  {
-   "symbol": "BPCL",
-   "score": 84.0,
-   "entry": 281.95,
-   "stop": 270.07,
-   "target1": 289.87,
-   "target2": 297.8,
-   "reasons": [
-    "Below EMA50 - washed out",
-    "28% below 52-week high - beaten down",
-    "RSI 33 low - oversold region",
-    "Negative 5d/20d momentum"
-   ],
-   "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.75%"
+   "veto_detail": "adding this pick would take portfolio heat to 6.73%"
   },
   {
    "symbol": "COCHINSHIP",
    "score": 84.0,
-   "entry": 1139.9,
-   "stop": 1078.47,
-   "target1": 1180.86,
-   "target2": 1221.81,
+   "entry": 1129.9,
+   "stop": 1069.86,
+   "target1": 1169.93,
+   "target2": 1209.95,
    "reasons": [
     "Below EMA50 - washed out",
     "39% below 52-week high - beaten down",
@@ -218,7 +165,55 @@
     "Negative 5d/20d momentum"
    ],
    "veto_rule": "portfolio_heat",
+   "veto_detail": "adding this pick would take portfolio heat to 6.71%"
+  },
+  {
+   "symbol": "COLPAL",
+   "score": 84.0,
+   "entry": 1601.6,
+   "stop": 1524.43,
+   "target1": 1653.05,
+   "target2": 1704.5,
+   "reasons": [
+    "Below EMA50 - washed out",
+    "31% below 52-week high - beaten down",
+    "RSI 31 low - oversold region",
+    "Negative 5d/20d momentum"
+   ],
+   "veto_rule": "portfolio_heat",
+   "veto_detail": "adding this pick would take portfolio heat to 6.68%"
+  },
+  {
+   "symbol": "CONCOR",
+   "score": 84.0,
+   "entry": 418.0,
+   "stop": 399.64,
+   "target1": 430.24,
+   "target2": 442.48,
+   "reasons": [
+    "Below EMA50 - washed out",
+    "25% below 52-week high - beaten down",
+    "RSI 34 low - oversold region",
+    "Negative 5d/20d momentum"
+   ],
+   "veto_rule": "portfolio_heat",
    "veto_detail": "adding this pick would take portfolio heat to 6.74%"
+  },
+  {
+   "symbol": "CROMPTON",
+   "score": 84.0,
+   "entry": 204.0,
+   "stop": 192.39,
+   "target1": 211.74,
+   "target2": 219.48,
+   "reasons": [
+    "Below EMA50 - washed out",
+    "34% below 52-week high - beaten down",
+    "RSI 43 low - oversold region",
+    "Negative 5d/20d momentum"
+   ],
+   "veto_rule": "portfolio_heat",
+   "veto_detail": "adding this pick would take portfolio heat to 6.75%"
   }
  ]
 }
