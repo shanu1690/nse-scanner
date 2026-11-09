@@ -1,704 +1,579 @@
 {
  "picks": [
   {
-   "symbol": "DIVISLAB",
-   "score": 92.0,
-   "direction": "CE",
-   "spot": 9558.5,
-   "expiry": "23-Nov-2026",
-   "dte": 25,
-   "strategy": "debit_spread",
-   "legs": [
-    {
-     "action": "BUY",
-     "side": "CE",
-     "strike": 9600.0,
-     "premium": 360.0
-    },
-    {
-     "action": "SELL",
-     "side": "CE",
-     "strike": 9800.0,
-     "premium": 266.3
-    }
-   ],
-   "cost": 9370.0,
-   "max_loss": 9370.0,
-   "max_profit": 10630.0,
-   "breakeven": 9693.7,
-   "probability": null,
-   "lot_size": 100,
-   "payoff": [
-    {
-     "price": 8124.72,
-     "pnl": -9370.0
-    },
-    {
-     "price": 8268.1,
-     "pnl": -9370.0
-    },
-    {
-     "price": 8411.48,
-     "pnl": -9370.0
-    },
-    {
-     "price": 8554.86,
-     "pnl": -9370.0
-    },
-    {
-     "price": 8698.23,
-     "pnl": -9370.0
-    },
-    {
-     "price": 8841.61,
-     "pnl": -9370.0
-    },
-    {
-     "price": 8984.99,
-     "pnl": -9370.0
-    },
-    {
-     "price": 9128.37,
-     "pnl": -9370.0
-    },
-    {
-     "price": 9271.74,
-     "pnl": -9370.0
-    },
-    {
-     "price": 9415.12,
-     "pnl": -9370.0
-    },
-    {
-     "price": 9558.5,
-     "pnl": -9370.0
-    },
-    {
-     "price": 9701.88,
-     "pnl": 817.75
-    },
-    {
-     "price": 9845.25,
-     "pnl": 10630.0
-    },
-    {
-     "price": 9988.63,
-     "pnl": 10630.0
-    },
-    {
-     "price": 10132.01,
-     "pnl": 10630.0
-    },
-    {
-     "price": 10275.39,
-     "pnl": 10630.0
-    },
-    {
-     "price": 10418.76,
-     "pnl": 10630.0
-    },
-    {
-     "price": 10562.14,
-     "pnl": 10630.0
-    },
-    {
-     "price": 10705.52,
-     "pnl": 10630.0
-    },
-    {
-     "price": 10848.9,
-     "pnl": 10630.0
-    },
-    {
-     "price": 10992.27,
-     "pnl": 10630.0
-    }
-   ],
-   "thesis": "DIVISLAB needs to close above 9693.7 by 23-Nov-2026 (25 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: n/a (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 9,370 -- you can lose 100% of the amount paid for this position.",
-   "chain": {
-    "pcr": 0.61,
-    "atm_iv": 0.0,
-    "ivr": null,
-    "max_pain": 9300.0,
-    "expected_move_pct": 0.0,
-    "straddle_prem": 677.25,
-    "total_oi": 1899400,
-    "d_oi_total": 3544,
-    "reasons": [
-     "Underlying in uptrend (EMA21 > EMA50)",
-     "PCR 0.61 < 0.7 (put writers active / bullish tone)",
-     "OI building +3,544 while price rising (fresh longs)",
-     "Spot above max pain 9300.0 (gravity pulls up)"
-    ]
-   }
-  },
-  {
-   "symbol": "TVSMOTOR",
-   "score": 80.0,
-   "direction": "CE",
-   "spot": 4239.9,
-   "expiry": "23-Nov-2026",
-   "dte": 25,
-   "strategy": "debit_spread",
-   "legs": [
-    {
-     "action": "BUY",
-     "side": "CE",
-     "strike": 4250.0,
-     "premium": 139.6
-    },
-    {
-     "action": "SELL",
-     "side": "CE",
-     "strike": 4350.0,
-     "premium": 98.6
-    }
-   ],
-   "cost": 7175.0,
-   "max_loss": 7175.0,
-   "max_profit": 10325.0,
-   "breakeven": 4291.0,
-   "probability": null,
-   "lot_size": 175,
-   "payoff": [
-    {
-     "price": 3603.91,
-     "pnl": -7175.0
-    },
-    {
-     "price": 3667.51,
-     "pnl": -7175.0
-    },
-    {
-     "price": 3731.11,
-     "pnl": -7175.0
-    },
-    {
-     "price": 3794.71,
-     "pnl": -7175.0
-    },
-    {
-     "price": 3858.31,
-     "pnl": -7175.0
-    },
-    {
-     "price": 3921.91,
-     "pnl": -7175.0
-    },
-    {
-     "price": 3985.51,
-     "pnl": -7175.0
-    },
-    {
-     "price": 4049.1,
-     "pnl": -7175.0
-    },
-    {
-     "price": 4112.7,
-     "pnl": -7175.0
-    },
-    {
-     "price": 4176.3,
-     "pnl": -7175.0
-    },
-    {
-     "price": 4239.9,
-     "pnl": -7175.0
-    },
-    {
-     "price": 4303.5,
-     "pnl": 2187.24
-    },
-    {
-     "price": 4367.1,
-     "pnl": 10325.0
-    },
-    {
-     "price": 4430.7,
-     "pnl": 10325.0
-    },
-    {
-     "price": 4494.29,
-     "pnl": 10325.0
-    },
-    {
-     "price": 4557.89,
-     "pnl": 10325.0
-    },
-    {
-     "price": 4621.49,
-     "pnl": 10325.0
-    },
-    {
-     "price": 4685.09,
-     "pnl": 10325.0
-    },
-    {
-     "price": 4748.69,
-     "pnl": 10325.0
-    },
-    {
-     "price": 4812.29,
-     "pnl": 10325.0
-    },
-    {
-     "price": 4875.88,
-     "pnl": 10325.0
-    }
-   ],
-   "thesis": "TVSMOTOR needs to close above 4291.0 by 23-Nov-2026 (25 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: n/a (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 7,175 -- you can lose 100% of the amount paid for this position.",
-   "chain": {
-    "pcr": 0.51,
-    "atm_iv": 0.0,
-    "ivr": null,
-    "max_pain": 4100.0,
-    "expected_move_pct": 0.0,
-    "straddle_prem": 275.9,
-    "total_oi": 3661175,
-    "d_oi_total": 13952,
-    "reasons": [
-     "PCR 0.51 < 0.7 (put writers active / bullish tone)",
-     "OI building +13,952 while price rising (fresh longs)",
-     "Spot above max pain 4100.0 (gravity pulls up)"
-    ]
-   }
-  },
-  {
-   "symbol": "BOSCHLTD",
-   "score": 77.0,
-   "direction": "CE",
-   "spot": 47625.0,
-   "expiry": "23-Nov-2026",
-   "dte": 25,
-   "strategy": "debit_spread",
-   "legs": [
-    {
-     "action": "BUY",
-     "side": "CE",
-     "strike": 47500.0,
-     "premium": 1509.5
-    },
-    {
-     "action": "SELL",
-     "side": "CE",
-     "strike": 48000.0,
-     "premium": 1238.9
-    }
-   ],
-   "cost": 6765.0,
-   "max_loss": 6765.0,
-   "max_profit": 5735.0,
-   "breakeven": 47770.6,
-   "probability": null,
-   "lot_size": 25,
-   "payoff": [
-    {
-     "price": 40481.25,
-     "pnl": -6765.0
-    },
-    {
-     "price": 41195.62,
-     "pnl": -6765.0
-    },
-    {
-     "price": 41910.0,
-     "pnl": -6765.0
-    },
-    {
-     "price": 42624.38,
-     "pnl": -6765.0
-    },
-    {
-     "price": 43338.75,
-     "pnl": -6765.0
-    },
-    {
-     "price": 44053.12,
-     "pnl": -6765.0
-    },
-    {
-     "price": 44767.5,
-     "pnl": -6765.0
-    },
-    {
-     "price": 45481.88,
-     "pnl": -6765.0
-    },
-    {
-     "price": 46196.25,
-     "pnl": -6765.0
-    },
-    {
-     "price": 46910.62,
-     "pnl": -6765.0
-    },
-    {
-     "price": 47625.0,
-     "pnl": -3640.0
-    },
-    {
-     "price": 48339.38,
-     "pnl": 5735.0
-    },
-    {
-     "price": 49053.75,
-     "pnl": 5735.0
-    },
-    {
-     "price": 49768.12,
-     "pnl": 5735.0
-    },
-    {
-     "price": 50482.5,
-     "pnl": 5735.0
-    },
-    {
-     "price": 51196.87,
-     "pnl": 5735.0
-    },
-    {
-     "price": 51911.25,
-     "pnl": 5735.0
-    },
-    {
-     "price": 52625.62,
-     "pnl": 5735.0
-    },
-    {
-     "price": 53340.0,
-     "pnl": 5735.0
-    },
-    {
-     "price": 54054.37,
-     "pnl": 5735.0
-    },
-    {
-     "price": 54768.75,
-     "pnl": 5735.0
-    }
-   ],
-   "thesis": "BOSCHLTD needs to close above 47770.6 by 23-Nov-2026 (25 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: n/a (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 6,765 -- you can lose 100% of the amount paid for this position.",
-   "chain": {
-    "pcr": 1.11,
-    "atm_iv": 0.0,
-    "ivr": null,
-    "max_pain": 45000.0,
-    "expected_move_pct": 0.0,
-    "straddle_prem": 2902.4,
-    "total_oi": 143025,
-    "d_oi_total": 2124,
-    "reasons": [
-     "Underlying in uptrend (EMA21 > EMA50)",
-     "PCR 1.11 elevated (call selling pressure)",
-     "OI building +2,124 while price rising (fresh longs)",
-     "Spot above max pain 45000.0 (gravity pulls up)"
-    ]
-   }
-  },
-  {
-   "symbol": "INDHOTEL",
+   "symbol": "MANKIND",
    "score": 87.0,
    "direction": "CE",
-   "spot": 805.2,
+   "spot": 2668.3,
    "expiry": "23-Nov-2026",
-   "dte": 25,
+   "dte": 13,
    "strategy": "debit_spread",
    "legs": [
     {
      "action": "BUY",
      "side": "CE",
-     "strike": 810.0,
-     "premium": 21.9
+     "strike": 2660.0,
+     "premium": 72.45
     },
     {
      "action": "SELL",
      "side": "CE",
-     "strike": 830.0,
-     "premium": 13.25
+     "strike": 2700.0,
+     "premium": 54.7
     }
    ],
-   "cost": 8650.0,
-   "max_loss": 8650.0,
-   "max_profit": 11350.0,
-   "breakeven": 818.65,
+   "cost": 4437.5,
+   "max_loss": 4437.5,
+   "max_profit": 5562.5,
+   "breakeven": 2677.75,
    "probability": null,
-   "lot_size": 1000,
+   "lot_size": 250,
    "payoff": [
     {
-     "price": 684.42,
-     "pnl": -8650.0
+     "price": 2268.06,
+     "pnl": -4437.5
     },
     {
-     "price": 696.5,
-     "pnl": -8650.0
+     "price": 2308.08,
+     "pnl": -4437.5
     },
     {
-     "price": 708.58,
-     "pnl": -8650.0
+     "price": 2348.1,
+     "pnl": -4437.5
     },
     {
-     "price": 720.65,
-     "pnl": -8650.0
+     "price": 2388.13,
+     "pnl": -4437.5
     },
     {
-     "price": 732.73,
-     "pnl": -8650.0
+     "price": 2428.15,
+     "pnl": -4437.5
     },
     {
-     "price": 744.81,
-     "pnl": -8650.0
+     "price": 2468.18,
+     "pnl": -4437.5
     },
     {
-     "price": 756.89,
-     "pnl": -8650.0
+     "price": 2508.2,
+     "pnl": -4437.5
     },
     {
-     "price": 768.97,
-     "pnl": -8650.0
+     "price": 2548.23,
+     "pnl": -4437.5
     },
     {
-     "price": 781.04,
-     "pnl": -8650.0
+     "price": 2588.25,
+     "pnl": -4437.5
     },
     {
-     "price": 793.12,
-     "pnl": -8650.0
+     "price": 2628.28,
+     "pnl": -4437.5
     },
     {
-     "price": 805.2,
-     "pnl": -8650.0
+     "price": 2668.3,
+     "pnl": -2362.5
     },
     {
-     "price": 817.28,
-     "pnl": -1372.0
+     "price": 2708.32,
+     "pnl": 5562.5
     },
     {
-     "price": 829.36,
-     "pnl": 10706.0
+     "price": 2748.35,
+     "pnl": 5562.5
     },
     {
-     "price": 841.43,
-     "pnl": 11350.0
+     "price": 2788.37,
+     "pnl": 5562.5
     },
     {
-     "price": 853.51,
-     "pnl": 11350.0
+     "price": 2828.4,
+     "pnl": 5562.5
     },
     {
-     "price": 865.59,
-     "pnl": 11350.0
+     "price": 2868.42,
+     "pnl": 5562.5
     },
     {
-     "price": 877.67,
-     "pnl": 11350.0
+     "price": 2908.45,
+     "pnl": 5562.5
     },
     {
-     "price": 889.75,
-     "pnl": 11350.0
+     "price": 2948.47,
+     "pnl": 5562.5
     },
     {
-     "price": 901.82,
-     "pnl": 11350.0
+     "price": 2988.5,
+     "pnl": 5562.5
     },
     {
-     "price": 913.9,
-     "pnl": 11350.0
+     "price": 3028.52,
+     "pnl": 5562.5
     },
     {
-     "price": 925.98,
-     "pnl": 11350.0
+     "price": 3068.55,
+     "pnl": 5562.5
     }
    ],
-   "thesis": "INDHOTEL needs to close above 818.65 by 23-Nov-2026 (25 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: n/a (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 8,650 -- you can lose 100% of the amount paid for this position.",
+   "thesis": "MANKIND needs to close above 2677.75 by 23-Nov-2026 (13 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: n/a (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 4,438 -- you can lose 100% of the amount paid for this position.",
    "chain": {
-    "pcr": 0.7,
+    "pcr": 0.75,
     "atm_iv": 0.0,
     "ivr": null,
-    "max_pain": 780.0,
+    "max_pain": 2540.0,
     "expected_move_pct": 0.0,
-    "straddle_prem": 42.5,
-    "total_oi": 9750000,
-    "d_oi_total": 868,
+    "straddle_prem": 137.35,
+    "total_oi": 3237750,
+    "d_oi_total": 3644,
     "reasons": [
      "Underlying in uptrend (EMA21 > EMA50)",
-     "OI building +868 while price rising (fresh longs)",
-     "Spot above max pain 780.0 (gravity pulls up)"
+     "OI building +3,644 while price rising (fresh longs)",
+     "Spot above max pain 2540.0 (gravity pulls up)"
+    ]
+   }
+  },
+  {
+   "symbol": "PNB",
+   "score": 87.0,
+   "direction": "CE",
+   "spot": 132.17,
+   "expiry": "23-Nov-2026",
+   "dte": 13,
+   "strategy": "long",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 140.0,
+     "premium": 1.11
+    }
+   ],
+   "cost": 8880.0,
+   "max_loss": 8880.0,
+   "max_profit": null,
+   "breakeven": 141.11,
+   "probability": null,
+   "lot_size": 8000,
+   "payoff": [
+    {
+     "price": 112.34,
+     "pnl": -8880.0
+    },
+    {
+     "price": 114.33,
+     "pnl": -8880.0
+    },
+    {
+     "price": 116.31,
+     "pnl": -8880.0
+    },
+    {
+     "price": 118.29,
+     "pnl": -8880.0
+    },
+    {
+     "price": 120.27,
+     "pnl": -8880.0
+    },
+    {
+     "price": 122.26,
+     "pnl": -8880.0
+    },
+    {
+     "price": 124.24,
+     "pnl": -8880.0
+    },
+    {
+     "price": 126.22,
+     "pnl": -8880.0
+    },
+    {
+     "price": 128.2,
+     "pnl": -8880.0
+    },
+    {
+     "price": 130.19,
+     "pnl": -8880.0
+    },
+    {
+     "price": 132.17,
+     "pnl": -8880.0
+    },
+    {
+     "price": 134.15,
+     "pnl": -8880.0
+    },
+    {
+     "price": 136.14,
+     "pnl": -8880.0
+    },
+    {
+     "price": 138.12,
+     "pnl": -8880.0
+    },
+    {
+     "price": 140.1,
+     "pnl": -8078.4
+    },
+    {
+     "price": 142.08,
+     "pnl": 7782.0
+    },
+    {
+     "price": 144.07,
+     "pnl": 23642.4
+    },
+    {
+     "price": 146.05,
+     "pnl": 39502.8
+    },
+    {
+     "price": 148.03,
+     "pnl": 55363.2
+    },
+    {
+     "price": 150.01,
+     "pnl": 71223.6
+    },
+    {
+     "price": 152.0,
+     "pnl": 87084.0
+    }
+   ],
+   "thesis": "PNB needs to close above 141.11 by 23-Nov-2026 (13 trading days away) for this long CE to profit. Modeled probability of finishing there: n/a (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 8,880 -- you can lose 100% of the amount paid for this position.",
+   "chain": {
+    "pcr": 0.99,
+    "atm_iv": 0.0,
+    "ivr": null,
+    "max_pain": 125.0,
+    "expected_move_pct": 0.0,
+    "straddle_prem": 6.57,
+    "total_oi": 142104000,
+    "d_oi_total": 4204,
+    "reasons": [
+     "Underlying in uptrend (EMA21 > EMA50)",
+     "OI building +4,204 while price rising (fresh longs)",
+     "Spot above max pain 125.0 (gravity pulls up)"
+    ]
+   }
+  },
+  {
+   "symbol": "AUROPHARMA",
+   "score": 92.0,
+   "direction": "CE",
+   "spot": 1855.3,
+   "expiry": "23-Nov-2026",
+   "dte": 13,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 1860.0,
+     "premium": 34.35
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 1900.0,
+     "premium": 20.95
+    }
+   ],
+   "cost": 7370.0,
+   "max_loss": 7370.0,
+   "max_profit": 14630.0,
+   "breakeven": 1873.4,
+   "probability": null,
+   "lot_size": 550,
+   "payoff": [
+    {
+     "price": 1577.0,
+     "pnl": -7370.0
+    },
+    {
+     "price": 1604.83,
+     "pnl": -7370.0
+    },
+    {
+     "price": 1632.66,
+     "pnl": -7370.0
+    },
+    {
+     "price": 1660.49,
+     "pnl": -7370.0
+    },
+    {
+     "price": 1688.32,
+     "pnl": -7370.0
+    },
+    {
+     "price": 1716.15,
+     "pnl": -7370.0
+    },
+    {
+     "price": 1743.98,
+     "pnl": -7370.0
+    },
+    {
+     "price": 1771.81,
+     "pnl": -7370.0
+    },
+    {
+     "price": 1799.64,
+     "pnl": -7370.0
+    },
+    {
+     "price": 1827.47,
+     "pnl": -7370.0
+    },
+    {
+     "price": 1855.3,
+     "pnl": -7370.0
+    },
+    {
+     "price": 1883.13,
+     "pnl": 5351.22
+    },
+    {
+     "price": 1910.96,
+     "pnl": 14630.0
+    },
+    {
+     "price": 1938.79,
+     "pnl": 14630.0
+    },
+    {
+     "price": 1966.62,
+     "pnl": 14630.0
+    },
+    {
+     "price": 1994.45,
+     "pnl": 14630.0
+    },
+    {
+     "price": 2022.28,
+     "pnl": 14630.0
+    },
+    {
+     "price": 2050.11,
+     "pnl": 14630.0
+    },
+    {
+     "price": 2077.94,
+     "pnl": 14630.0
+    },
+    {
+     "price": 2105.77,
+     "pnl": 14630.0
+    },
+    {
+     "price": 2133.59,
+     "pnl": 14630.0
+    }
+   ],
+   "thesis": "AUROPHARMA needs to close above 1873.4 by 23-Nov-2026 (13 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: n/a (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 7,370 -- you can lose 100% of the amount paid for this position.",
+   "chain": {
+    "pcr": 0.66,
+    "atm_iv": 0.0,
+    "ivr": null,
+    "max_pain": 1720.0,
+    "expected_move_pct": 0.0,
+    "straddle_prem": 80.05,
+    "total_oi": 7896900,
+    "d_oi_total": 2414,
+    "reasons": [
+     "Underlying in uptrend (EMA21 > EMA50)",
+     "PCR 0.66 < 0.7 (put writers active / bullish tone)",
+     "OI building +2,414 while price rising (fresh longs)",
+     "Spot above max pain 1720.0 (gravity pulls up)"
+    ]
+   }
+  },
+  {
+   "symbol": "ATHERENERG",
+   "score": 87.0,
+   "direction": "CE",
+   "spot": 1859.8,
+   "expiry": "23-Nov-2026",
+   "dte": 13,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 1860.0,
+     "premium": 48.95
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 1900.0,
+     "premium": 35.0
+    }
+   ],
+   "cost": 5231.25,
+   "max_loss": 5231.25,
+   "max_profit": 9768.75,
+   "breakeven": 1873.95,
+   "probability": null,
+   "lot_size": 375,
+   "payoff": [
+    {
+     "price": 1580.83,
+     "pnl": -5231.25
+    },
+    {
+     "price": 1608.73,
+     "pnl": -5231.25
+    },
+    {
+     "price": 1636.62,
+     "pnl": -5231.25
+    },
+    {
+     "price": 1664.52,
+     "pnl": -5231.25
+    },
+    {
+     "price": 1692.42,
+     "pnl": -5231.25
+    },
+    {
+     "price": 1720.32,
+     "pnl": -5231.25
+    },
+    {
+     "price": 1748.21,
+     "pnl": -5231.25
+    },
+    {
+     "price": 1776.11,
+     "pnl": -5231.25
+    },
+    {
+     "price": 1804.01,
+     "pnl": -5231.25
+    },
+    {
+     "price": 1831.9,
+     "pnl": -5231.25
+    },
+    {
+     "price": 1859.8,
+     "pnl": -5231.25
+    },
+    {
+     "price": 1887.7,
+     "pnl": 5155.12
+    },
+    {
+     "price": 1915.59,
+     "pnl": 9768.75
+    },
+    {
+     "price": 1943.49,
+     "pnl": 9768.75
+    },
+    {
+     "price": 1971.39,
+     "pnl": 9768.75
+    },
+    {
+     "price": 1999.28,
+     "pnl": 9768.75
+    },
+    {
+     "price": 2027.18,
+     "pnl": 9768.75
+    },
+    {
+     "price": 2055.08,
+     "pnl": 9768.75
+    },
+    {
+     "price": 2082.98,
+     "pnl": 9768.75
+    },
+    {
+     "price": 2110.87,
+     "pnl": 9768.75
+    },
+    {
+     "price": 2138.77,
+     "pnl": 9768.75
+    }
+   ],
+   "thesis": "ATHERENERG needs to close above 1873.95 by 23-Nov-2026 (13 trading days away) for this defined-risk debit spread to profit. Modeled probability of finishing there: n/a (market-implied from current IV, not a guarantee). Maximum possible loss if wrong: Rs 5,231 -- you can lose 100% of the amount paid for this position.",
+   "chain": {
+    "pcr": 0.91,
+    "atm_iv": 0.0,
+    "ivr": null,
+    "max_pain": 1700.0,
+    "expected_move_pct": 0.0,
+    "straddle_prem": 109.15,
+    "total_oi": 7493625,
+    "d_oi_total": 942,
+    "reasons": [
+     "Underlying in uptrend (EMA21 > EMA50)",
+     "OI building +942 while price rising (fresh longs)",
+     "Spot above max pain 1700.0 (gravity pulls up)"
     ]
    }
   }
  ],
  "vetoed_capacity": [
   {
-   "symbol": "COFORGE",
-   "score": 92.0,
+   "symbol": "PETRONET",
+   "score": 87.0,
    "direction": "CE",
-   "spot": 1961.9,
+   "spot": 320.45,
    "expiry": "23-Nov-2026",
-   "dte": 25,
+   "dte": 13,
    "strategy": "debit_spread",
    "legs": [
     {
      "action": "BUY",
      "side": "CE",
-     "strike": 1960.0,
-     "premium": 69.0
+     "strike": 320.5,
+     "premium": 6.65
     },
     {
      "action": "SELL",
      "side": "CE",
-     "strike": 2000.0,
-     "premium": 51.5
+     "strike": 330.5,
+     "premium": 2.85
     }
    ],
-   "cost": 8312.5,
-   "max_loss": 8312.5,
-   "max_profit": 10687.5,
-   "breakeven": 1977.5,
+   "cost": 7220.0,
+   "max_loss": 7220.0,
+   "max_profit": 11780.0,
+   "breakeven": 324.3,
    "probability": null,
-   "lot_size": 475,
+   "lot_size": 1900,
    "veto_rule": "max_open_ideas",
    "veto_detail": "10 open ideas already at the 10 cap"
   },
   {
-   "symbol": "ZYDUSLIFE",
-   "score": 92.0,
-   "direction": "CE",
-   "spot": 1175.5,
-   "expiry": "23-Nov-2026",
-   "dte": 25,
-   "strategy": "debit_spread",
-   "legs": [
-    {
-     "action": "BUY",
-     "side": "CE",
-     "strike": 1180.0,
-     "premium": 44.85
-    },
-    {
-     "action": "SELL",
-     "side": "CE",
-     "strike": 1200.0,
-     "premium": 35.8
-    }
-   ],
-   "cost": 4072.5,
-   "max_loss": 4072.5,
-   "max_profit": 4927.5,
-   "breakeven": 1189.05,
-   "probability": null,
-   "lot_size": 450,
-   "veto_rule": "max_open_ideas",
-   "veto_detail": "10 open ideas already at the 10 cap"
-  },
-  {
-   "symbol": "KOTAKBANK",
+   "symbol": "SONACOMS",
    "score": 77.0,
    "direction": "CE",
-   "spot": 440.0,
+   "spot": 924.0,
    "expiry": "23-Nov-2026",
-   "dte": 25,
+   "dte": 13,
    "strategy": "long",
    "legs": [
     {
      "action": "BUY",
      "side": "CE",
-     "strike": 460.0,
-     "premium": 2.8
+     "strike": 980.0,
+     "premium": 5.5
     }
    ],
-   "cost": 5600.0,
-   "max_loss": 5600.0,
+   "cost": 6737.5,
+   "max_loss": 6737.5,
    "max_profit": null,
-   "breakeven": 462.8,
+   "breakeven": 985.5,
    "probability": null,
-   "lot_size": 2000,
-   "veto_rule": "max_open_ideas",
-   "veto_detail": "10 open ideas already at the 10 cap"
-  },
-  {
-   "symbol": "ATHERENERG",
-   "score": 87.0,
-   "direction": "CE",
-   "spot": 1650.0,
-   "expiry": "23-Nov-2026",
-   "dte": 25,
-   "strategy": "debit_spread",
-   "legs": [
-    {
-     "action": "BUY",
-     "side": "CE",
-     "strike": 1640.0,
-     "premium": 72.5
-    },
-    {
-     "action": "SELL",
-     "side": "CE",
-     "strike": 1680.0,
-     "premium": 53.4
-    }
-   ],
-   "cost": 7162.5,
-   "max_loss": 7162.5,
-   "max_profit": 7837.5,
-   "breakeven": 1659.1,
-   "probability": null,
-   "lot_size": 375,
-   "veto_rule": "max_open_ideas",
-   "veto_detail": "10 open ideas already at the 10 cap"
-  },
-  {
-   "symbol": "BSE",
-   "score": 75.0,
-   "direction": "CE",
-   "spot": 3485.0,
-   "expiry": "23-Nov-2026",
-   "dte": 25,
-   "strategy": "debit_spread",
-   "legs": [
-    {
-     "action": "BUY",
-     "side": "CE",
-     "strike": 3500.0,
-     "premium": 144.05
-    },
-    {
-     "action": "SELL",
-     "side": "CE",
-     "strike": 3600.0,
-     "premium": 100.0
-    }
-   ],
-   "cost": 8810.0,
-   "max_loss": 8810.0,
-   "max_profit": 11190.0,
-   "breakeven": 3544.05,
-   "probability": null,
-   "lot_size": 200,
-   "veto_rule": "max_open_ideas",
-   "veto_detail": "10 open ideas already at the 10 cap"
-  },
-  {
-   "symbol": "FEDERALBNK",
-   "score": 87.0,
-   "direction": "CE",
-   "spot": 346.0,
-   "expiry": "23-Nov-2026",
-   "dte": 25,
-   "strategy": "long",
-   "legs": [
-    {
-     "action": "BUY",
-     "side": "CE",
-     "strike": 365.0,
-     "premium": 2.6
-    }
-   ],
-   "cost": 6500.0,
-   "max_loss": 6500.0,
-   "max_profit": null,
-   "breakeven": 367.6,
-   "probability": null,
-   "lot_size": 2500,
+   "lot_size": 1225,
    "veto_rule": "max_open_ideas",
    "veto_detail": "10 open ideas already at the 10 cap"
   },
@@ -706,55 +581,303 @@
    "symbol": "UNIONBANK",
    "score": 87.0,
    "direction": "CE",
-   "spot": 182.98,
+   "spot": 197.0,
    "expiry": "23-Nov-2026",
-   "dte": 25,
-   "strategy": "long",
+   "dte": 13,
+   "strategy": "debit_spread",
    "legs": [
     {
      "action": "BUY",
      "side": "CE",
-     "strike": 192.5,
-     "premium": 2.21
+     "strike": 197.5,
+     "premium": 4.87
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 202.5,
+     "premium": 3.1
     }
    ],
-   "cost": 9779.25,
-   "max_loss": 9779.25,
-   "max_profit": null,
-   "breakeven": 194.71,
+   "cost": 7832.25,
+   "max_loss": 7832.25,
+   "max_profit": 14292.75,
+   "breakeven": 199.27,
    "probability": null,
    "lot_size": 4425,
    "veto_rule": "max_open_ideas",
    "veto_detail": "10 open ideas already at the 10 cap"
   },
   {
-   "symbol": "PGEL",
-   "score": 75.0,
+   "symbol": "DIVISLAB",
+   "score": 87.0,
    "direction": "CE",
-   "spot": 536.4,
+   "spot": 11565.5,
    "expiry": "23-Nov-2026",
-   "dte": 25,
+   "dte": 13,
    "strategy": "debit_spread",
    "legs": [
     {
      "action": "BUY",
      "side": "CE",
-     "strike": 540.0,
-     "premium": 21.4
+     "strike": 11600.0,
+     "premium": 273.0
     },
     {
      "action": "SELL",
      "side": "CE",
-     "strike": 560.0,
-     "premium": 13.05
+     "strike": 11800.0,
+     "premium": 198.5
     }
    ],
-   "cost": 7932.5,
-   "max_loss": 7932.5,
-   "max_profit": 11067.5,
-   "breakeven": 548.35,
+   "cost": 7450.0,
+   "max_loss": 7450.0,
+   "max_profit": 12550.0,
+   "breakeven": 11674.5,
    "probability": null,
-   "lot_size": 950,
+   "lot_size": 100,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "ICICIBANK",
+   "score": 77.0,
+   "direction": "CE",
+   "spot": 1589.0,
+   "expiry": "23-Nov-2026",
+   "dte": 13,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 1590.0,
+     "premium": 25.8
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 1610.0,
+     "premium": 17.45
+    }
+   ],
+   "cost": 5845.0,
+   "max_loss": 5845.0,
+   "max_profit": 8155.0,
+   "breakeven": 1598.35,
+   "probability": null,
+   "lot_size": 700,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "LAURUSLABS",
+   "score": 87.0,
+   "direction": "CE",
+   "spot": 2454.0,
+   "expiry": "23-Nov-2026",
+   "dte": 13,
+   "strategy": "long",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 2620.0,
+     "premium": 16.1
+    }
+   ],
+   "cost": 6842.5,
+   "max_loss": 6842.5,
+   "max_profit": null,
+   "breakeven": 2636.1,
+   "probability": null,
+   "lot_size": 425,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "GAIL",
+   "score": 77.0,
+   "direction": "CE",
+   "spot": 188.0,
+   "expiry": "23-Nov-2026",
+   "dte": 13,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 187.5,
+     "premium": 4.0
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 192.5,
+     "premium": 1.9
+    }
+   ],
+   "cost": 7455.0,
+   "max_loss": 7455.0,
+   "max_profit": 10295.0,
+   "breakeven": 189.6,
+   "probability": null,
+   "lot_size": 3550,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "OBEROIRLTY",
+   "score": 80.0,
+   "direction": "CE",
+   "spot": 1775.0,
+   "expiry": "23-Nov-2026",
+   "dte": 13,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 1780.0,
+     "premium": 40.15
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 1820.0,
+     "premium": 23.0
+    }
+   ],
+   "cost": 6002.5,
+   "max_loss": 6002.5,
+   "max_profit": 7997.5,
+   "breakeven": 1797.15,
+   "probability": null,
+   "lot_size": 350,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "UNOMINDA",
+   "score": 77.0,
+   "direction": "CE",
+   "spot": 1353.8,
+   "expiry": "23-Nov-2026",
+   "dte": 13,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 1360.0,
+     "premium": 37.4
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 1400.0,
+     "premium": 20.75
+    }
+   ],
+   "cost": 9157.5,
+   "max_loss": 9157.5,
+   "max_profit": 12842.5,
+   "breakeven": 1376.65,
+   "probability": null,
+   "lot_size": 550,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "ADANIPORTS",
+   "score": 87.0,
+   "direction": "CE",
+   "spot": 1942.7,
+   "expiry": "23-Nov-2026",
+   "dte": 13,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 1940.0,
+     "premium": 40.0
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 1980.0,
+     "premium": 24.0
+    }
+   ],
+   "cost": 7600.0,
+   "max_loss": 7600.0,
+   "max_profit": 11400.0,
+   "breakeven": 1956.0,
+   "probability": null,
+   "lot_size": 475,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "ETERNAL",
+   "score": 77.0,
+   "direction": "CE",
+   "spot": 363.45,
+   "expiry": "23-Nov-2026",
+   "dte": 13,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 365.0,
+     "premium": 6.95
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 375.0,
+     "premium": 3.5
+    }
+   ],
+   "cost": 8366.25,
+   "max_loss": 8366.25,
+   "max_profit": 15883.75,
+   "breakeven": 368.45,
+   "probability": null,
+   "lot_size": 2425,
+   "veto_rule": "max_open_ideas",
+   "veto_detail": "10 open ideas already at the 10 cap"
+  },
+  {
+   "symbol": "HAL",
+   "score": 92.0,
+   "direction": "CE",
+   "spot": 4999.0,
+   "expiry": "23-Nov-2026",
+   "dte": 13,
+   "strategy": "debit_spread",
+   "legs": [
+    {
+     "action": "BUY",
+     "side": "CE",
+     "strike": 5000.0,
+     "premium": 138.75
+    },
+    {
+     "action": "SELL",
+     "side": "CE",
+     "strike": 5100.0,
+     "premium": 99.1
+    }
+   ],
+   "cost": 5947.5,
+   "max_loss": 5947.5,
+   "max_profit": 9052.5,
+   "breakeven": 5039.65,
+   "probability": null,
+   "lot_size": 150,
    "veto_rule": "max_open_ideas",
    "veto_detail": "10 open ideas already at the 10 cap"
   }
