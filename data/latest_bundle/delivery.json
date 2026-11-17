@@ -2,209 +2,199 @@
  "style": "fade",
  "picks": [
   {
-   "symbol": "SUPREMEIND",
-   "score": 85,
-   "entry": 3296.6,
-   "stop": 3130.01,
-   "target1": 3407.66,
-   "target2": 3518.72,
-   "reasons": [
-    "Below EMA50 - washed out",
-    "19% below 52-week high - beaten down",
-    "Negative 5d/20d momentum"
-   ],
-   "position_size": 6,
-   "rupee_risk": 999.54,
-   "risk_pct_of_capital": 1.0,
-   "reward_risk": 1.33,
-   "sector": "Capital Goods"
-  },
-  {
    "symbol": "ASTRAL",
    "score": 84.0,
-   "entry": 1272.8,
-   "stop": 1204.28,
-   "target1": 1318.48,
-   "target2": 1364.15,
+   "entry": 1242.6,
+   "stop": 1184.78,
+   "target1": 1281.15,
+   "target2": 1319.7,
    "reasons": [
     "Below EMA50 - washed out",
-    "28% below 52-week high - beaten down",
-    "RSI 35 low - oversold region",
+    "30% below 52-week high - beaten down",
+    "RSI 32 low - oversold region",
     "Negative 5d/20d momentum"
    ],
-   "position_size": 14,
-   "rupee_risk": 959.28,
-   "risk_pct_of_capital": 0.959,
+   "position_size": 17,
+   "rupee_risk": 982.94,
+   "risk_pct_of_capital": 0.983,
    "reward_risk": 1.33,
    "sector": "Capital Goods"
   },
   {
    "symbol": "CUMMINSIND",
    "score": 84.0,
-   "entry": 4135.2,
-   "stop": 3890.47,
-   "target1": 4298.36,
-   "target2": 4461.51,
+   "entry": 4065.0,
+   "stop": 3814.57,
+   "target1": 4231.96,
+   "target2": 4398.91,
    "reasons": [
     "Below EMA50 - washed out",
-    "32% below 52-week high - beaten down",
-    "RSI 35 low - oversold region",
+    "33% below 52-week high - beaten down",
+    "RSI 36 low - oversold region",
     "Negative 5d/20d momentum"
    ],
-   "position_size": 4,
-   "rupee_risk": 978.92,
-   "risk_pct_of_capital": 0.979,
+   "position_size": 3,
+   "rupee_risk": 751.29,
+   "risk_pct_of_capital": 0.751,
    "reward_risk": 1.33,
    "sector": "Capital Goods"
   },
   {
    "symbol": "PIIND",
    "score": 84.0,
-   "entry": 1712.9,
-   "stop": 1590.79,
-   "target1": 1794.3,
-   "target2": 1875.71,
+   "entry": 1672.0,
+   "stop": 1568.79,
+   "target1": 1740.81,
+   "target2": 1809.62,
    "reasons": [
     "Below EMA50 - washed out",
     "55% below 52-week high - beaten down",
-    "RSI 25 low - oversold region",
+    "RSI 26 low - oversold region",
     "Negative 5d/20d momentum"
    ],
-   "position_size": 8,
-   "rupee_risk": 976.88,
-   "risk_pct_of_capital": 0.977,
+   "position_size": 9,
+   "rupee_risk": 928.89,
+   "risk_pct_of_capital": 0.929,
    "reward_risk": 1.33,
    "sector": "Chemicals"
   },
   {
-   "symbol": "CGPOWER",
+   "symbol": "MANAPPURAM",
    "score": 82.0,
-   "entry": 800.0,
-   "stop": 752.44,
-   "target1": 831.71,
-   "target2": 863.42,
+   "entry": 296.6,
+   "stop": 279.1,
+   "target1": 308.27,
+   "target2": 319.93,
    "reasons": [
     "Below EMA50 - washed out",
-    "18% below 52-week high - beaten down",
-    "RSI 43 low - oversold region",
-    "Negative 5d/20d momentum"
-   ],
-   "position_size": 21,
-   "rupee_risk": 998.76,
-   "risk_pct_of_capital": 0.999,
-   "reward_risk": 1.33,
-   "sector": "Capital Goods"
-  },
-  {
-   "symbol": "OIL",
-   "score": 79.0,
-   "entry": 439.0,
-   "stop": 422.59,
-   "target1": 449.94,
-   "target2": 460.88,
-   "reasons": [
-    "Below EMA50 - washed out",
-    "17% below 52-week high - beaten down",
+    "22% below 52-week high - beaten down",
     "RSI 40 low - oversold region",
     "Negative 5d/20d momentum"
    ],
-   "position_size": 60,
-   "rupee_risk": 984.6,
-   "risk_pct_of_capital": 0.985,
+   "position_size": 57,
+   "rupee_risk": 997.5,
+   "risk_pct_of_capital": 0.997,
    "reward_risk": 1.33,
-   "sector": "Oil Gas & Consumable Fuels"
+   "sector": "Financial Services"
+  },
+  {
+   "symbol": "NHPC",
+   "score": 81.0,
+   "entry": 74.8,
+   "stop": 71.89,
+   "target1": 76.74,
+   "target2": 78.68,
+   "reasons": [
+    "Below EMA50 - washed out",
+    "14% below 52-week high - beaten down",
+    "RSI 45 low - oversold region",
+    "Negative 5d/20d momentum"
+   ],
+   "position_size": 343,
+   "rupee_risk": 998.13,
+   "risk_pct_of_capital": 0.998,
+   "reward_risk": 1.33,
+   "sector": "Power"
+  },
+  {
+   "symbol": "KAYNES",
+   "score": 80.0,
+   "entry": 2858.0,
+   "stop": 2623.15,
+   "target1": 3014.57,
+   "target2": 3171.13,
+   "reasons": [
+    "Below EMA50 - washed out",
+    "56% below 52-week high - beaten down",
+    "RSI 33 low - oversold region",
+    "Negative 5d/20d momentum"
+   ],
+   "position_size": 4,
+   "rupee_risk": 939.4,
+   "risk_pct_of_capital": 0.939,
+   "reward_risk": 1.33,
+   "sector": "Capital Goods"
   }
  ],
  "vetoed_capacity": [
   {
-   "symbol": "AUBANK",
-   "score": 77.0,
-   "entry": 929.0,
-   "stop": 884.95,
-   "target1": 958.37,
-   "target2": 987.73,
+   "symbol": "PREMIERENE",
+   "score": 80.0,
+   "entry": 833.0,
+   "stop": 786.85,
+   "target1": 863.76,
+   "target2": 894.53,
    "reasons": [
     "Below EMA50 - washed out",
-    "19% below 52-week high - beaten down",
+    "27% below 52-week high - beaten down",
+    "RSI 37 low - oversold region",
     "Negative 5d/20d momentum"
    ],
    "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.87%"
+   "veto_detail": "adding this pick would take portfolio heat to 6.57%"
   },
   {
-   "symbol": "BRITANNIA",
-   "score": 77.0,
-   "entry": 4790.0,
-   "stop": 4611.17,
-   "target1": 4909.22,
-   "target2": 5028.45,
+   "symbol": "TMPV",
+   "score": 80.0,
+   "entry": 259.2,
+   "stop": 245.74,
+   "target1": 268.18,
+   "target2": 277.15,
    "reasons": [
     "Below EMA50 - washed out",
-    "24% below 52-week high - beaten down",
+    "37% below 52-week high - beaten down",
+    "RSI 34 low - oversold region",
     "Negative 5d/20d momentum"
    ],
    "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.79%"
+   "veto_detail": "adding this pick would take portfolio heat to 6.59%"
   },
   {
-   "symbol": "COLPAL",
-   "score": 77.0,
-   "entry": 1695.0,
-   "stop": 1626.49,
-   "target1": 1740.68,
-   "target2": 1786.35,
+   "symbol": "ONGC",
+   "score": 79.0,
+   "entry": 223.52,
+   "stop": 216.62,
+   "target1": 228.12,
+   "target2": 232.72,
+   "reasons": [
+    "Below EMA50 - washed out",
+    "27% below 52-week high - beaten down",
+    "RSI 43 low - oversold region",
+    "Negative 5d/20d momentum"
+   ],
+   "veto_rule": "portfolio_heat",
+   "veto_detail": "adding this pick would take portfolio heat to 6.59%"
+  },
+  {
+   "symbol": "TATAPOWER",
+   "score": 79.0,
+   "entry": 344.5,
+   "stop": 331.5,
+   "target1": 353.16,
+   "target2": 361.83,
    "reasons": [
     "Below EMA50 - washed out",
     "26% below 52-week high - beaten down",
+    "RSI 43 low - oversold region",
     "Negative 5d/20d momentum"
    ],
    "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.86%"
+   "veto_detail": "adding this pick would take portfolio heat to 6.59%"
   },
   {
-   "symbol": "DABUR",
+   "symbol": "ALKEM",
    "score": 77.0,
-   "entry": 375.25,
-   "stop": 361.03,
-   "target1": 384.73,
-   "target2": 394.2,
+   "entry": 5175.0,
+   "stop": 4971.49,
+   "target1": 5310.68,
+   "target2": 5446.35,
    "reasons": [
     "Below EMA50 - washed out",
-    "30% below 52-week high - beaten down",
+    "13% below 52-week high - beaten down",
     "Negative 5d/20d momentum"
    ],
    "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.89%"
-  },
-  {
-   "symbol": "DIXON",
-   "score": 77.0,
-   "entry": 12603.0,
-   "stop": 12010.26,
-   "target1": 12998.16,
-   "target2": 13393.33,
-   "reasons": [
-    "Below EMA50 - washed out",
-    "20% below 52-week high - beaten down",
-    "Negative 5d/20d momentum"
-   ],
-   "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.49%"
-  },
-  {
-   "symbol": "FORTIS",
-   "score": 77.0,
-   "entry": 774.55,
-   "stop": 739.12,
-   "target1": 798.17,
-   "target2": 821.78,
-   "reasons": [
-    "Below EMA50 - washed out",
-    "25% below 52-week high - beaten down",
-    "Negative 5d/20d momentum"
-   ],
-   "veto_rule": "portfolio_heat",
-   "veto_detail": "adding this pick would take portfolio heat to 6.89%"
+   "veto_detail": "adding this pick would take portfolio heat to 6.41%"
   }
  ]
 }
